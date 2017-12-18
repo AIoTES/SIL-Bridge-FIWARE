@@ -20,3 +20,9 @@ dist/
 nbdist/
 nbactions.xml
 nb-configuration.xml
+
+#Gradle
+.gradletasknamecache
+.gradle/
+build/
+bin/

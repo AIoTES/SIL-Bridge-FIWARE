@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <groupId>eu.interiot.intermw</groupId>
+    <artifactId>mw.bridge.orion.parent</artifactId>
+    <version>0.0.1-SNAPSHOT</version>
+    <name>INTER-IoT Bridge for Orion (Parent)</name>
+    <packaging>pom</packaging>
+
+    <properties>
+        <maven.compiler.source>1.8</maven.compiler.source>
+        <maven.compiler.target>1.8</maven.compiler.target>
+        <intermw.version>0.0.1-SNAPSHOT</intermw.version>
+        <okhttp.version>2.7.5</okhttp.version>
+    </properties>
+
+    <modules>
+        <module>fiware-ngsiv2-java-client-1.3.0</module>
+        <module>mw.bridge.orion</module>
+    </modules>
+
+    <repositories>
+        <repository>
+            <id>nexus.inter-iot.eu-releases</id>
+            <url>http://nexus.inter-iot.eu/repository/maven-releases/</url>
+        </repository>
+        <repository>
+            <id>nexus.inter-iot.eu-snapshots</id>
+            <url>http://nexus.inter-iot.eu/repository/maven-snapshots/</url>
+            <snapshots>
+                <updatePolicy>always</updatePolicy>
+            </snapshots>
+        </repository>
+    </repositories>
+</project>
