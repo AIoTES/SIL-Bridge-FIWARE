@@ -1,0 +1,12 @@
+{
+  "entities": [
+    {
+      "type": "Room",
+      "isPattern": "false",
+      "id": "Room1"
+    }
+  ],
+  "attributes": [
+    "temperature"
+  ]
+}

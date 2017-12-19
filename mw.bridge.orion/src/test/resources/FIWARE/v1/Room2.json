@@ -1,0 +1,22 @@
+{
+  "contextElements": [
+    {
+      "type": "Room",
+      "isPattern": "false",
+      "id": "Room2",
+      "attributes": [
+        {
+          "name": "temperature",
+          "type": "float",
+          "value": "21"
+        },
+        {
+          "name": "pressure",
+          "type": "integer",
+          "value": "711"
+        }
+      ]
+    }
+  ],
+  "updateAction": "APPEND"
+}

@@ -1,0 +1,26 @@
+{
+  "id": "Room1",
+  "type": "Room",
+  "temperature": {
+    "value": 26.5,
+    "type": "Float",
+    "metadata": {
+      "accuracy": {
+        "value": 0.8,
+        "type": "Float"
+      }
+    }
+  },
+  "someAttribute": {
+    "value": "attribute value",
+    "type": "Text"
+  },
+  "referenceAttribute": {
+    "value": "Device2",
+    "type": "Ref"
+  },
+  "arrayAttribute": {
+    "value": [1,2,3,4,["A","B","C"]],
+    "type": "Array"
+  }
+}

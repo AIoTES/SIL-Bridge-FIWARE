@@ -1,0 +1,27 @@
+{
+  "contextResponses": [
+    {
+      "contextElement": {
+        "attributes": [
+          {
+            "name": "temperature",
+            "type": "float",
+            "value": "23"
+          },
+          {
+            "name": "pressure",
+            "type": "integer",
+            "value": "720"
+          }
+        ],
+        "id": "Room1",
+        "isPattern": "false",
+        "type": "Room"
+      },
+      "statusCode": {
+        "code": "200",
+        "reasonPhrase": "OK"
+      }
+    }
+  ]
+}

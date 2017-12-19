@@ -1,0 +1,12 @@
+{
+  "id": "Room1",
+  "type": "Room",
+  "referenceAttribute": {
+    "value": "Device2",
+    "type": "Ref"
+  },
+  "objectAttribute": {
+    "value": {"A": 1, "B": 2, "C": [1,2,3]},
+    "type": "Object"
+  }
+}

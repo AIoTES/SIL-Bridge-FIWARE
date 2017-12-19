@@ -1,0 +1,44 @@
+{
+  "contextElements": [
+    {
+      "type": "T1",
+      "isPattern": "false",
+      "id": "E1",
+      "attributes": [
+        {
+          "name": "A",
+          "type": "T",
+          "value": [
+            "22",
+            {
+              "x": [
+                "x1",
+                "x2"
+              ],
+              "y": "3"
+            },
+            [
+              "z1",
+              "z2"
+            ]
+          ]
+        },
+        {
+          "name": "B",
+          "type": "T",
+          "value": {
+            "x": {
+              "x1": "a",
+              "x2": "b"
+            },
+            "y": [
+              "y1",
+              "y2"
+            ]
+          }
+        }
+      ]
+    }
+  ],
+  "updateAction": "UPDATE"
+}

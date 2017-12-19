@@ -1,0 +1,228 @@
+{
+  "msgTimestamp": "20/09/2017 13:28:08",
+  "name": "RTG040",
+  "id": 48,
+  "type": null,
+  "version": "1.0",
+  "attributes": {
+    "TwC": {
+      "value": true
+    },
+    "GantR": {
+      "value": false
+    },
+    "NetLoad": {
+      "value": 0
+    },
+    "TrSea": {
+      "value": false
+    },
+    "GpsDU": {
+      "value": 3
+    },
+    "GpsHDOP": {
+      "value": 1.06199777126312
+    },
+    "Fault": {
+      "value": false
+    },
+    "Gps": {
+      "value": 11
+    },
+    "HoistD": {
+      "value": false
+    },
+    "DrOn": {
+      "value": true
+    },
+    "TwO": {
+      "value": false
+    },
+    "FLevel": {
+      "value": 0
+    },
+    "SprOn": {
+      "value": true
+    },
+    "JoyTr": {
+      "value": 0
+    },
+    "CtCab": {
+      "value": true
+    },
+    "HoistU": {
+      "value": false
+    },
+    "GantL": {
+      "value": false
+    },
+    "JoyHo": {
+      "value": 0
+    },
+    "Sp40": {
+      "value": false
+    },
+    "PlcOn": {
+      "value": true
+    },
+    "Nmov": {
+      "value": false
+    },
+    "MMant": {
+      "value": false
+    },
+    "GpsR": {
+      "value": 24.13
+    },
+    "GpsV": {
+      "value": 0
+    },
+    "GpsY": {
+      "value": -0.327966660261154
+    },
+    "GpsX": {
+      "value": 39.4324722290039
+    },
+    "StbyOnR": {
+      "value": false
+    },
+    "Reserva10": {
+      "value": false
+    },
+    "OnR": {
+      "value": false
+    },
+    "ASpeed": {
+      "value": 0
+    },
+    "EHoist": {
+      "value": 0
+    },
+    "PwGen": {
+      "value": 0
+    },
+    "Reserva12": {
+      "value": false
+    },
+    "Reserva11": {
+      "value": false
+    },
+    "CabSen": {
+      "value": false
+    },
+    "RWheel": {
+      "value": false
+    },
+    "Wheel": {
+      "value": true
+    },
+    "Warning": {
+      "value": false
+    },
+    "StbyON": {
+      "value": false
+    },
+    "OffR": {
+      "value": false
+    },
+    "EcoOnR": {
+      "value": false
+    },
+    "FRate": {
+      "value": 0
+    },
+    "PwCons": {
+      "value": 26
+    },
+    "Oper": {
+      "value": 0
+    },
+    "Off": {
+      "value": false
+    },
+    "WindS": {
+      "value": 0
+    },
+    "AdBL": {
+      "value": 0
+    },
+    "SpTwin20": {
+      "value": false
+    },
+    "Reserva9": {
+      "value": false
+    },
+    "Reserva8": {
+      "value": false
+    },
+    "WHours": {
+      "value": 10744
+    },
+    "Sp20": {
+      "value": true
+    },
+    "BoostP": {
+      "value": 0
+    },
+    "Dist": {
+      "value": 0
+    },
+    "Reserva7": {
+      "value": false
+    },
+    "TrLand": {
+      "value": false
+    },
+    "Reserva6": {
+      "value": 0
+    },
+    "Reserva5": {
+      "value": 0
+    },
+    "Reserva4": {
+      "value": 0
+    },
+    "EcoON": {
+      "value": false
+    },
+    "TrPark": {
+      "value": false
+    },
+    "TrLane": {
+      "value": false
+    },
+    "Reserva3": {
+      "value": 0
+    },
+    "Reserva2": {
+      "value": 0
+    },
+    "Reserva1": {
+      "value": 0
+    },
+    "RpmE": {
+      "value": 1800
+    },
+    "ETrolley": {
+      "value": 0
+    },
+    "CtEro": {
+      "value": false
+    },
+    "GpsSQ": {
+      "value": 2
+    },
+    "Alarm": {
+      "value": false
+    },
+    "VBat": {
+      "value": 0
+    },
+    "JoyGr": {
+      "value": 0
+    },
+    "On": {
+      "value": true
+    }
+  }
+}

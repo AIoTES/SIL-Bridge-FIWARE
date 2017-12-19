@@ -1,0 +1,14 @@
+{
+  "id": "Room1",
+  "temperature": {
+    "metadata": {
+      "accuracy": {
+        "type": "Float",
+        "value": 0.8
+      }
+    },
+    "type": "Float",
+    "value": 26.5
+  },
+  "type": "Room"
+}

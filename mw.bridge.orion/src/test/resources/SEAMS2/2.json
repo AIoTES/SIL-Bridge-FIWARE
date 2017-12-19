@@ -1,0 +1,99 @@
+{
+  "msgTimestamp": "06/09/2017 22:00:01",
+  "name": "TT0039",
+  "id": 10,
+  "type": null,
+  "version": "1.0",
+  "attributes": {
+    "PPos1": {
+      "value": false
+    },
+    "PPos2": {
+      "value": false
+    },
+    "GpsDU": {
+      "value": 4
+    },
+    "FRate": {
+      "value": 0
+    },
+    "GpsHDOP": {
+      "value": 1.0653532743454
+    },
+    "Gps": {
+      "value": 8
+    },
+    "DrOn": {
+      "value": true
+    },
+    "Off": {
+      "value": false
+    },
+    "Reserva9": {
+      "value": false
+    },
+    "Reserva8": {
+      "value": false
+    },
+    "WHours": {
+      "value": 50559
+    },
+    "PlcOn": {
+      "value": true
+    },
+    "Nmov": {
+      "value": true
+    },
+    "Dist": {
+      "value": 0
+    },
+    "Reserva7": {
+      "value": false
+    },
+    "Reserva6": {
+      "value": 2
+    },
+    "GpsR": {
+      "value": 295.39
+    },
+    "Reserva5": {
+      "value": 0
+    },
+    "Reserva4": {
+      "value": 0
+    },
+    "Reserva2": {
+      "value": 0
+    },
+    "GpsV": {
+      "value": 0
+    },
+    "Reserva1": {
+      "value": 0
+    },
+    "GpsY": {
+      "value": -0.327091664075851
+    },
+    "GpsX": {
+      "value": 39.4317817687988
+    },
+    "Reserva10": {
+      "value": false
+    },
+    "GpsSQ": {
+      "value": 2
+    },
+    "Alarm": {
+      "value": true
+    },
+    "Reserva12": {
+      "value": false
+    },
+    "Reserva11": {
+      "value": false
+    },
+    "On": {
+      "value": true
+    }
+  }
+}
