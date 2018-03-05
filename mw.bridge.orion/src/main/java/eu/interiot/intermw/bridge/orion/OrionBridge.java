@@ -21,8 +21,10 @@ package eu.interiot.intermw.bridge.orion;
 import static spark.Spark.post;
 
 import java.io.IOException;
+import java.net.URL;
 import java.util.Calendar;
 import java.util.List;
+import java.util.Properties;
 import java.util.Set;
 import java.util.UUID;
 
@@ -118,13 +120,21 @@ public class OrionBridge extends AbstractBridge {
 	private void create(String thingId, MessagePayload payload) throws BridgeException {
 		
 		// Transform to a compatible ID in FIWARE
-		String transformedID = filterThingID(thingId);
+		//String transformedID = filterThingID(thingId);
 		//XXX Question SRIPAS --> DO we need a new  for each bridge instance??
 		FIWAREv2Translator fiwareTranslator = new FIWAREv2Translator();
 		
+		//Properties properties = configuration.getProperties();
+
 		String url = null;
+        try {
+            url = new URL(configuration.getProperty("orion-url")).toString();
+        } 
+        catch (Exception e) {
+            throw new BridgeException("Failed to read Example bridge configuration: " + e.getMessage());
+        }
+        
 		String body = null; 
-		
 		try {
 			body = fiwareTranslator.toFormatX(payload.getJenaModel());			
 		} catch (IllegalSyntaxException e1) {
