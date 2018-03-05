@@ -20,11 +20,19 @@ package eu.interiot.intermw.bridge.orion;
 
 import static spark.Spark.post;
 
+import java.io.IOException;
 import java.util.Calendar;
 import java.util.List;
 import java.util.Set;
 import java.util.UUID;
 
+import org.apache.http.HttpEntity;
+import org.apache.http.HttpResponse;
+import org.apache.http.client.methods.HttpPost;
+import org.apache.http.entity.ContentType;
+import org.apache.http.entity.StringEntity;
+import org.apache.http.impl.client.CloseableHttpClient;
+import org.apache.http.impl.client.HttpClientBuilder;
 import org.interiot.fiware.ngsiv2.client.ApiException;
 import org.interiot.fiware.ngsiv2.client.model.Attribute;
 import org.interiot.fiware.ngsiv2.client.model.Attributes;
@@ -54,11 +62,13 @@ import eu.interiot.message.EntityID;
 import eu.interiot.message.Message;
 import eu.interiot.message.MessageMetadata;
 import eu.interiot.message.MessagePayload;
+import eu.interiot.message.URI.URIManagerMessageMetadata;
 import eu.interiot.message.exceptions.MessageException;
 import eu.interiot.message.exceptions.payload.PayloadException;
 import eu.interiot.message.metaTypes.PlatformMessageMetadata;
 import eu.interiot.message.utils.INTERMWDemoUtils;
-import eu.interiot.message.URI.URIManagerMessageMetadata;
+import eu.interiot.translators.syntax.IllegalSyntaxException;
+import eu.interiot.translators.syntax.FIWARE.FIWAREv2Translator;
 
 @eu.interiot.intermw.bridge.annotations.Bridge(platformType = "FIWARE")
 public class OrionBridge extends AbstractBridge {
@@ -76,8 +86,12 @@ public class OrionBridge extends AbstractBridge {
 	private MwFactory mwFactory;
 	private int callbackPort;
 	private Logger log = LoggerFactory.getLogger(this.getClass());
+	private CloseableHttpClient httpClient;
 	// private Broker broker;
 	// private Publisher<Message> publisher;
+	
+    private final Logger logger = LoggerFactory.getLogger(OrionBridge.class);
+
 
 	public OrionBridge(Configuration configuration, Platform platform) throws MiddlewareException {
 		super(configuration, platform);
@@ -100,15 +114,35 @@ public class OrionBridge extends AbstractBridge {
 		callbackPort = Integer.parseInt(configuration.getProperty("bridge-callback-port"));
 	}
 
-	private void create(String thingId) throws BridgeException {
-
+	
+	private void create(String thingId, MessagePayload payload) throws BridgeException {
+		
+		// Transform to a compatible ID in FIWARE
 		String transformedID = filterThingID(thingId);
-
+		//XXX Question SRIPAS --> DO we need a new  for each bridge instance??
+		FIWAREv2Translator fiwareTranslator = new FIWAREv2Translator();
+		
+		String url = null;
+		String body = null; 
+		
+		try {
+			body = fiwareTranslator.toFormatX(payload.getJenaModel());			
+		} catch (IllegalSyntaxException e1) {
+			// TODO Auto-generated catch block
+			e1.printStackTrace();
+		}
+		
+		postToFiware(url,body);
+		
+		
+/**		
+		
 		try {
 
+			//Orion library has a class 'Entity' representing a device/thing/entity capable to produce data.
 			Entity fiwareEntity = new Entity();
 			fiwareEntity.setId(transformedID);
-
+				
 
 			//TODO FF, 20-09-2017, Commented out, as things were sent without attributes.
 			//All hardcoded, but should work....
@@ -132,6 +166,8 @@ public class OrionBridge extends AbstractBridge {
 
 			Attributes attributes = createAttributes(interiotThing);
 */
+		
+		/*
 			try {
 				client.createEntity(fiwareEntity, null);
 				client.updateOrAppendEntityAttributes(fiwareEntity.getId(), attributes, fiwareEntity.getType(), null);
@@ -143,8 +179,34 @@ public class OrionBridge extends AbstractBridge {
 		} catch (Exception e) {
 			throw new BridgeException(e);
 		}
+
+		*/
+}
+
+
+	private void postToFiware(String url, String body) {
+        
+		httpClient = HttpClientBuilder.create().build();
+        HttpPost httpPost = new HttpPost(url);        
+        HttpEntity httpEntity = new StringEntity(body, ContentType.APPLICATION_JSON);
+        httpPost.setEntity(httpEntity);
+        HttpResponse response = null;
+		try {
+			response = httpClient.execute(httpPost);
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		
+        logger.debug("Received response from the platform: {}", response.getStatusLine());
+	
 	}
 
+	/**
+	 * Replace forbidden characters in FIWARE to be compatible
+	 * @param thingId
+	 * @return
+	 */
 	private String filterThingID(String thingId) {
 		String filteredString;
 		// Check algorithm is optimal+
@@ -463,14 +525,14 @@ public class OrionBridge extends AbstractBridge {
 				// do two things, iterate over the list and do atomic
 				// creations or introduce a bulk creation method
 				// For the moment. It is implemented the first option,
-				// in order to preserve the Bridge API TODO consisder
+				// in order to preserve the Bridge API TODO consider
 				// changing it
 
 				for (String entityId : entityIds) {
 					// TODO Loop over the payload to include possible
 					// observations in the creation or a schema of the
 					// 'Thing'
-					create(entityId);
+					create(entityId, message.getPayload());
 				}
 			} else if (messageTypesEnumSet.contains(URIManagerMessageMetadata.MessageTypesEnum.THING_UNREGISTER)) {
 				Set<String> entityIds = INTERMWDemoUtils.getEntityIDsFromPayload(message.getPayload(),
@@ -537,7 +599,7 @@ public class OrionBridge extends AbstractBridge {
 						"The message type is not properly handled and can't be processed"
 								+ this.getClass().getName() + " in platform " + platform.getId().getId());
 			}
-			// TODO For now we cereate a geenric response message. Think
+			// TODO For now we create a generic response message. Think
 			// about sending a specific status
 
 			Message responseMessage = createResponseMessage(message);
