@@ -80,7 +80,7 @@ public class OrionBridge extends AbstractBridge {
 	private final static String DEFAULT_ATTRIBUTE_TYPE = "Text";
 	private final static String PROPERTIES_PREFIX = "orion-";
 
-	private final String BASE_PATH = "http://vmplsp02.westeurope.cloudapp.azure.com";
+	private final String BASE_PATH;
 
 	private OrionApiClient client;
 	private MwFactory mwFactory;
@@ -100,6 +100,7 @@ public class OrionBridge extends AbstractBridge {
 		mwFactory = Context.mwFactory();
 		// TODO commons context and broker context. This is very confusing
 		// broker = eu.interiot.intermw.comm.broker.Context.getBroker();
+		BASE_PATH = configuration.getProperty("orion-base-path");
 		callbackPort = Integer.parseInt(configuration.getProperty("bridge-callback-port"));
 	}
 	
@@ -107,7 +108,8 @@ public class OrionBridge extends AbstractBridge {
 		super(configuration, platform);
 		// FIXME make bridges multi-instance
 		client = new OrionApiClient(configuration.getProperties(PROPERTIES_PREFIX),URL);
-		
+		BASE_PATH = configuration.getProperty("orion-base-path");
+
 		mwFactory = Context.mwFactory();
 		// TODO commons context and broker context. This is very confusing
 		// broker = eu.interiot.intermw.comm.broker.Context.getBroker();
@@ -132,7 +134,14 @@ public class OrionBridge extends AbstractBridge {
 			e1.printStackTrace();
 		}
 		
-		postToFiware(url,body);
+	
+		try {
+			String fiwareCreate = BASE_PATH+FiwareUtils.FIWARE_CREATE;
+			FiwareUtils.postToFiware(fiwareCreate,body);
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
 		
 		
 /**		
@@ -184,23 +193,7 @@ public class OrionBridge extends AbstractBridge {
 }
 
 
-	private void postToFiware(String url, String body) {
-        
-		httpClient = HttpClientBuilder.create().build();
-        HttpPost httpPost = new HttpPost(url);        
-        HttpEntity httpEntity = new StringEntity(body, ContentType.APPLICATION_JSON);
-        httpPost.setEntity(httpEntity);
-        HttpResponse response = null;
-		try {
-			response = httpClient.execute(httpPost);
-		} catch (IOException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
-		
-        logger.debug("Received response from the platform: {}", response.getStatusLine());
-	
-	}
+
 
 	/**
 	 * Replace forbidden characters in FIWARE to be compatible
