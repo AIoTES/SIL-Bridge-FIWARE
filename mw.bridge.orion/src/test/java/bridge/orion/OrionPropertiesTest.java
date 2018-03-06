@@ -72,7 +72,7 @@ public class OrionPropertiesTest {
 			//String body = "{body}";
 			assertNotNull(body);
 
-			FiwareUtils.postToFiware(basepath + FiwareUtils.FIWARE_CREATE, body);
+			FiwareUtils.postToFiware(basepath + FiwareUtils.FIWARE_ENTITY_REGISTER, body);
 			
 			/*
 			 * // register platform orionBridge.send(platformRegisterMsg); Message

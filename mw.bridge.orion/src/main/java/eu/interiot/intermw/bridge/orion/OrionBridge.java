@@ -146,7 +146,7 @@ public class OrionBridge extends AbstractBridge {
 		
 	
 		try {
-			String fiwareCreate = BASE_PATH+FiwareUtils.FIWARE_CREATE;
+			String fiwareCreate = BASE_PATH+FiwareUtils.FIWARE_ENTITY_REGISTER;
 			FiwareUtils.postToFiware(fiwareCreate,body);
 		} catch (IOException e) {
 			// TODO Auto-generated catch block
@@ -248,6 +248,12 @@ public class OrionBridge extends AbstractBridge {
 	}
 
 */
+	
+	private void forwardObservation (String entityId, Message message) {
+		
+	
+	}
+	
 	private void update(String thingId, Message message) throws BridgeException, MessageException {
 		// FIXME HACK: getAttributeFromPayload assumes that
 		// there is an observation inside the payload
