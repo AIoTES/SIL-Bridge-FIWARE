@@ -10,7 +10,7 @@ import org.junit.Test;
 import com.google.common.base.Charsets;
 import com.google.common.io.Resources;
 
-import eu.interiot.intermw.bridge.orion.FiwareUtils;
+import eu.interiot.intermw.bridge.orion.OrionV2Utils;
 import eu.interiot.intermw.bridge.orion.OrionBridge;
 import eu.interiot.intermw.commons.DefaultConfiguration;
 import eu.interiot.intermw.commons.exceptions.MiddlewareException;
@@ -72,7 +72,7 @@ public class OrionPropertiesTest {
 			//String body = "{body}";
 			assertNotNull(body);
 
-			FiwareUtils.postToFiware(basepath + FiwareUtils.FIWARE_ENTITY_REGISTER, body);
+			OrionV2Utils.createSubscription(basepath, body);
 			
 			/*
 			 * // register platform orionBridge.send(platformRegisterMsg); Message

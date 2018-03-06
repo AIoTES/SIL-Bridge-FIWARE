@@ -14,11 +14,11 @@ import org.apache.http.impl.client.HttpClientBuilder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class FiwareUtils {
+public class OrionV2Utils {
 
 	private static CloseableHttpClient httpClient;
 	String url;
-    private final static Logger logger = LoggerFactory.getLogger(FiwareUtils.class);
+    private final static Logger logger = LoggerFactory.getLogger(OrionV2Utils.class);
 
     //Unsupported
     public static final String FIWARE_PLATFORM_REGISTER = "";
@@ -26,51 +26,61 @@ public class FiwareUtils {
     public static final String FIWARE_ENTITY_ACTUATION = "";
     
     //post
-    public static final String FIWARE_ENTITY_REGISTER= "/v2/entities";
+    private static final String FIWARE_ENTITY_REGISTER= "/v2/entities";
     //delete {entityId}
-    public static final String FIWARE_ENTITY_UNREGISTER = "/v2/entities";
+    private static final String FIWARE_ENTITY_UNREGISTER = "/v2/entities";
     //post {entityId}
-    public static final String FIWARE_ENTITY_OBSERVATION = "/v2/entities";
+    private static final String FIWARE_ENTITY_OBSERVATION = "/v2/entities";
     //get
-    public static final String FIWARE_ENTITY_DISCOVERY = "/v2/entities";
+    private static final String FIWARE_ENTITY_DISCOVERY = "/v2/entities";
     //get {entityId}
-    public static final String FIWARE_ENTITY_QUERY = "/v2/entities";
+    private static final String FIWARE_ENTITY_QUERY = "/v2/op/query";
     //post
-    public static final String FIWARE_ENTITY_SUBSCRIBE = "/v2/subscriptions";
+    private static final String FIWARE_ENTITY_SUBSCRIBE = "/v2/subscriptions";
     //remove {subscriptionId}
-    public static final String FIWARE_ENTITY_UNSUBSCRIBE = "/v2/subscriptions/";
+    private static final String FIWARE_ENTITY_UNSUBSCRIBE = "/v2/subscriptions/";
        	
-	public static HttpResponse registerEntity(String url, String body) {
-		return null; 
+	public static HttpResponse registerEntity(String baseUrl, String body) throws IOException {
+		String completeUrl = baseUrl + FIWARE_ENTITY_REGISTER;
+		return postToFiware(completeUrl, body);
 	}
 	
-	public static HttpResponse unregisterEntity(String url, String entityId) {
-		return null; 
+	public static HttpResponse unregisterEntity(String baseUrl, String entityId) throws IOException {
+		String completeUrl = baseUrl + FIWARE_ENTITY_UNREGISTER+"/"+entityId;
+		return deteleInFiware(completeUrl); 
 	}
 	
-	public static HttpResponse publishEntityObservation(String url, String entityId ,String body) {
-		return null; 
+	public static HttpResponse publishEntityObservation(String baseUrl, String entityId ,String body) throws IOException {
+		String completeUrl = baseUrl + FIWARE_ENTITY_OBSERVATION+"/"+entityId;
+		return deteleInFiware(completeUrl); 
 	}
 	
-	public static HttpResponse discoverEntities(String url) {
-		return null; 
+	public static HttpResponse discoverEntities(String baseUrl) throws IOException {
+		String completeUrl = baseUrl + FIWARE_ENTITY_DISCOVERY;
+		return getFromFiware(completeUrl); 
 	}
 	
-	public static HttpResponse queryEntityById(String url, String entityId) {
-		return null; 
+	//TODO Check ontology alignment with Pawel/Kasia
+	//TODO Build a shortcut to query a single entity by id
+	public static HttpResponse queryEntityById(String baseUrl, String body) throws IOException {
+		String completeUrl = baseUrl + FIWARE_ENTITY_QUERY+"/"+body;
+		return postToFiware(completeUrl, body); 
 	}
     
-	public static HttpResponse createSubscription(String url, String body) {
-		return null; 
+	
+	public static HttpResponse createSubscription(String baseUrl, String body) throws IOException {
+		String completeUrl = baseUrl + FIWARE_ENTITY_SUBSCRIBE;
+		return postToFiware(completeUrl, body); 
 	}
 
-	public static HttpResponse removeSubscription(String url, String subscriptionId) {
-		return null; 
+	public static HttpResponse removeSubscription(String baseUrl, String subscriptionId) throws IOException {
+		String completeUrl = baseUrl + FIWARE_ENTITY_UNSUBSCRIBE+"/"+subscriptionId;
+		return deteleInFiware(completeUrl); 
 	}
 	
 	
 	
-    public static HttpResponse postToFiware(String url, String body) throws IOException{
+    private static HttpResponse postToFiware(String url, String body) throws IOException{
     		
 		httpClient = HttpClientBuilder.create().build();
         HttpPost httpPost = new HttpPost(url);        
@@ -94,7 +104,7 @@ public class FiwareUtils {
 
 	}
     
-    public static HttpResponse getFromFiware(String url) throws IOException{
+    private static HttpResponse getFromFiware(String url) throws IOException{
 		
 		httpClient = HttpClientBuilder.create().build();
         HttpGet httpGet = new HttpGet(url);        
@@ -116,7 +126,7 @@ public class FiwareUtils {
 
 	}
     
-    public static HttpResponse deteleInFiware(String url) throws IOException{
+    private static HttpResponse deteleInFiware(String url) throws IOException{
     	
     	httpClient = HttpClientBuilder.create().build();
     	HttpDelete httpDelete = new HttpDelete(url);

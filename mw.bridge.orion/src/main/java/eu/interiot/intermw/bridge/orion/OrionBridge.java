@@ -138,23 +138,16 @@ public class OrionBridge extends AbstractBridge {
         
 		String body = null; 
 		try {
-			body = fiwareTranslator.toFormatX(payload.getJenaModel());			
-		} catch (IllegalSyntaxException e1) {
+			body = fiwareTranslator.toFormatX(payload.getJenaModel());	
+			OrionV2Utils.registerEntity(BASE_PATH,body);
+
+		} catch (IllegalSyntaxException | IOException e1) {
 			// TODO Auto-generated catch block
 			e1.printStackTrace();
 		}
+			
 		
-	
-		try {
-			String fiwareCreate = BASE_PATH+FiwareUtils.FIWARE_ENTITY_REGISTER;
-			FiwareUtils.postToFiware(fiwareCreate,body);
-		} catch (IOException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
-		
-		
-/**		
+		/**		
 		
 		try {
 
@@ -249,21 +242,33 @@ public class OrionBridge extends AbstractBridge {
 
 */
 	
-	private void forwardObservation (String entityId, Message message) {
-		
-	
-	}
-	
-	private void update(String thingId, Message message) throws BridgeException, MessageException {
+	private void publishObservation(String thingId, Message message) throws BridgeException, MessageException {
 		// FIXME HACK: getAttributeFromPayload assumes that
 		// there is an observation inside the payload
 		// It will not work otherwise
 		String key = INTERMWDemoUtils.getAttrKeyToUpdateFromPayload(message.getPayload());
 		String value = INTERMWDemoUtils.getAttrValueToUpdateFromPayload(message.getPayload());
 		String type = INTERMWDemoUtils.getAttrTypeToUpdateFromPayload(message.getPayload());
-
+		
 		String transformedID = filterThingID(thingId);
 
+		// Transform to a compatible ID in FIWARE
+		//String transformedID = filterThingID(thingId);
+		//XXX Question SRIPAS --> DO we need a new  for each bridge instance??
+		FIWAREv2Translator fiwareTranslator = new FIWAREv2Translator();
+		
+		//Properties properties = configuration.getProperties();
+       
+		String body = null; 
+		try {
+			body = fiwareTranslator.toFormatX(message.getPayload().getJenaModel());	
+			OrionV2Utils.publishEntityObservation(BASE_PATH, thingId, body);
+		} catch (IllegalSyntaxException | IOException e1) {
+			// TODO Auto-generated catch block
+			e1.printStackTrace();
+		}
+		
+	/*	
 		try {
 			Entity fiwareEntity = new Entity();
 			fiwareEntity.setId(transformedID);
@@ -276,10 +281,12 @@ public class OrionBridge extends AbstractBridge {
 			attr.setValue(value);
 			attributes.put(filterThingAttrKey(key), attr);
 
-			client.updateOrAppendEntityAttributes(fiwareEntity.getId(), attributes, fiwareEntity.getType(), null);
+			client.updateOrAppendEntityAttributes(fiwareEntity.getId(), attributes, fiwareEntity.getType(), null);	
+		
 		} catch (Exception e) {
 			throw new BridgeException(e);
 		}
+		*/
 	}
 
 	private String filterThingAttrKey(String key) {
@@ -311,9 +318,12 @@ public class OrionBridge extends AbstractBridge {
 	 * ID???
 	 * 
 	 * @param thingId
+	 * @throws IOException 
 	 */
-	private void delete(String thingId) throws BridgeException {
+	private void delete(String thingId) throws BridgeException, IOException {
 
+		OrionV2Utils.unregisterEntity(BASE_PATH, thingId);
+		
 		String transformedID = filterThingID(thingId);
 
 		try {
@@ -550,19 +560,19 @@ public class OrionBridge extends AbstractBridge {
 					delete(entityId);
 				}
 			} else if (messageTypesEnumSet.contains(URIManagerMessageMetadata.MessageTypesEnum.THING_UPDATE)) {
-				// FIXME This implementation assumes that only one
-				// attribute is updated at once
-				// FIXME This code is for the demo only. It will break
-				// otherwise.
+
 				if (messageTypesEnumSet.contains(URIManagerMessageMetadata.MessageTypesEnum.OBSERVATION)) {
+					
 					Set<String> entities = INTERMWDemoUtils.getEntityIDsFromPayload(message.getPayload(),
 							INTERMWDemoUtils.EntityTypeDevice);
+					
 					if (entities.isEmpty())
 						throw new BridgeException("No entities of type Device found in the Payload");
 					String entity = entities.iterator().next();
 
 					System.out.println("Updating thing:" + entity);
-					update(entity, message);
+					publishObservation(entity, message);
+				
 				}
 
 			} else if (messageTypesEnumSet.contains(URIManagerMessageMetadata.MessageTypesEnum.QUERY)) {
@@ -619,7 +629,7 @@ public class OrionBridge extends AbstractBridge {
 				throw new MessageException("error publishing response", e);
 			}
 
-		} catch (MessageException | UnsupportedActionException | IllegalActionException | UnknownActionException e) {
+		} catch (MessageException | UnsupportedActionException | IllegalActionException | UnknownActionException | IOException e) {
 			throw new BridgeException(e.toString());
 		}
 
