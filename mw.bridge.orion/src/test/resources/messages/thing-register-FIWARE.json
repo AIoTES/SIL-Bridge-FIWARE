@@ -41,7 +41,7 @@
             "@id": "_:b0"
           },
           "InterIoT:syntax/FIWAREv2#hasId": "http://www.example.com/example-sensor",
-          "InterIoT:syntax/FIWAREv2#hasType": "Generic Device",
+          "InterIoT:syntax/FIWAREv2#hasType": "Device",
           "http://www.w3.org/ns/sosa/isHostedBy": {
             "@id": "InterIoT:example-platform1"
           }
