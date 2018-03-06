@@ -22,7 +22,7 @@ public class FiwareUtils {
     
 	
 	public static void postToFiware(String url, String body) throws IOException{
-    	
+    		
 		httpClient = HttpClientBuilder.create().build();
         HttpPost httpPost = new HttpPost(url);        
         HttpEntity httpEntity = new StringEntity(body, ContentType.APPLICATION_JSON);
@@ -30,6 +30,7 @@ public class FiwareUtils {
         HttpResponse response = null;
 		try {
 			response = httpClient.execute(httpPost);
+			System.out.println(response.toString());
 		} catch (IOException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
