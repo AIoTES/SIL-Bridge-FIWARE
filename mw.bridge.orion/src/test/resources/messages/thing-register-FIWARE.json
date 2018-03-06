@@ -25,7 +25,14 @@
           "@id": "_:b0",
           "@type": "InterIoT:syntax/FIWAREv2#Attribute",
           "InterIoT:syntax/FIWAREv2#hasName": "name",
-          "InterIoT:syntax/FIWAREv2#hasValue": ""
+          "InterIoT:syntax/FIWAREv2#hasValue": {
+            "@id": "_:b1"
+          }
+        },
+        {
+          "@id": "_:b1",
+          "InterIoT:syntax/FIWAREv2#hasAttrValue": "Device 1",
+          "InterIoT:syntax/FIWAREv2#hasType": "String"
         },
         {
           "@id": "http://www.example.com/example-sensor",
