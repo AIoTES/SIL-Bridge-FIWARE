@@ -32,6 +32,7 @@
             <groupId>com.spotify</groupId>
             <artifactId>docker-client</artifactId>
             <version>3.5.12</version>
+            <scope>test</scope>
         </dependency>
         <dependency>
             <groupId>com.sparkjava</groupId>
