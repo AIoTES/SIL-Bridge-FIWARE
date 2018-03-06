@@ -41,7 +41,7 @@ public class OrionPropertiesTest {
 
 		Configuration configuration;
 		OrionBridge orionBridge;
-		try {
+		try {			
 			configuration = new DefaultConfiguration("*.bridge.properties");
 			orionBridge = new OrionBridge(configuration, platform);
 			// create Message objects from serialized messages
