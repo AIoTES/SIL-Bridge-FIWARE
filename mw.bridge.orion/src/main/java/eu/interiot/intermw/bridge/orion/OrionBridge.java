@@ -21,24 +21,13 @@ package eu.interiot.intermw.bridge.orion;
 import static spark.Spark.post;
 
 import java.io.IOException;
-import java.net.URL;
 import java.util.Calendar;
 import java.util.List;
-import java.util.Properties;
 import java.util.Set;
 import java.util.UUID;
 
-import org.apache.http.HttpEntity;
-import org.apache.http.HttpResponse;
-import org.apache.http.client.methods.HttpPost;
-import org.apache.http.entity.ContentType;
-import org.apache.http.entity.StringEntity;
 import org.apache.http.impl.client.CloseableHttpClient;
-import org.apache.http.impl.client.HttpClientBuilder;
 import org.interiot.fiware.ngsiv2.client.ApiException;
-import org.interiot.fiware.ngsiv2.client.model.Attribute;
-import org.interiot.fiware.ngsiv2.client.model.Attributes;
-import org.interiot.fiware.ngsiv2.client.model.Entity;
 import org.interiot.fiware.ngsiv2.client.model.Subscription;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -391,8 +380,12 @@ public class OrionBridge extends AbstractBridge {
 		} catch (Exception e) {
 			throw new BridgeException(e);
 		}
+	
+	
 	}
 
+	
+	
 	private static String initHttpListener() {
 
 		return null;
@@ -633,7 +626,60 @@ public class OrionBridge extends AbstractBridge {
 			throw new BridgeException(e.toString());
 		}
 
+	}
 
+	@Override
+	public void discover(Message arg0) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	public void query(Message arg0) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	public void registerPlatform(Message arg0) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	public void registerThing(Message arg0) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	public void subscribe(Message arg0) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	public void unregisterPlatform(Message arg0) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	public void unregisterThing(Message arg0) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	public void unsubscribe(Message arg0) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	public void updateThing(Message arg0) {
+		// TODO Auto-generated method stub
+		
 	}
 
 
