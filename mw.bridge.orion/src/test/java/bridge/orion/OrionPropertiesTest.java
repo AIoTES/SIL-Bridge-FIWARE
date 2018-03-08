@@ -44,6 +44,7 @@ public class OrionPropertiesTest {
 		try {			
 			configuration = new DefaultConfiguration("*.bridge.properties");
 			orionBridge = new OrionBridge(configuration, platform);
+			
 			// create Message objects from serialized messages
 			URL url1 = Resources.getResource("messages/platform-register.json");
 			String platformRegisterJson = Resources.toString(url1, Charsets.UTF_8);
@@ -53,21 +54,18 @@ public class OrionPropertiesTest {
 			EntityID platformId = platformRegisterMsg.getMetadata().asPlatformMessageMetadata().getReceivingPlatformIDs().iterator().next();
 			Platform platform = new Platform(platformId.toString(), platformRegisterMsg.getPayload());
 			
-			URL url2 = Resources.getResource("messages/thing-register.json");
-			String platformRegisterJson2 = Resources.toString(url1, Charsets.UTF_8);
-			System.out.println(platformRegisterJson2);
-			Message platformRegisterMsg2 = new Message(platformRegisterJson);
-
-
+			URL url2 = Resources.getResource("messages/thing-register-FIWARE.json");
+			String thingRegisterJson2 = Resources.toString(url2, Charsets.UTF_8);
+			System.out.println(thingRegisterJson2);
+			Message platformRegisterMsg2 = new Message(thingRegisterJson2);
 			
-			OrionBridge bridge = new OrionBridge(configuration, platform);
+			orionBridge = new OrionBridge(configuration, platform);
 
 			String basepath = configuration.getProperty("orion-base-path");
 			assertNotNull(basepath);
 
-			FIWAREv2Translator translator = new FIWAREv2Translator();
-			
-			String body = translator.toFormatX(platformRegisterMsg2.getMetadata().getJenaModel());
+			FIWAREv2Translator translator = new FIWAREv2Translator();			
+			String body = translator.toFormatX(platformRegisterMsg2.getPayload().getJenaModel());
 			
 			//String body = "{body}";
 			assertNotNull(body);
