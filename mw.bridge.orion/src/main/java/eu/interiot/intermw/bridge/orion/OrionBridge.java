@@ -21,12 +21,14 @@ package eu.interiot.intermw.bridge.orion;
 import static spark.Spark.post;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.List;
 import java.util.Set;
 import java.util.UUID;
 
 import org.apache.http.impl.client.CloseableHttpClient;
+import org.apache.jena.rdf.model.Model;
 import org.interiot.fiware.ngsiv2.client.ApiException;
 import org.interiot.fiware.ngsiv2.client.model.Subscription;
 import org.slf4j.Logger;
@@ -80,9 +82,8 @@ public class OrionBridge extends AbstractBridge {
 	private CloseableHttpClient httpClient;
 	// private Broker broker;
 	// private Publisher<Message> publisher;
-	
-    private final Logger logger = LoggerFactory.getLogger(OrionBridge.class);
 
+	private final Logger logger = LoggerFactory.getLogger(OrionBridge.class);
 
 	public OrionBridge(Configuration configuration, Platform platform) throws MiddlewareException {
 		super(configuration, platform);
@@ -93,12 +94,13 @@ public class OrionBridge extends AbstractBridge {
 		// broker = eu.interiot.intermw.comm.broker.Context.getBroker();
 		BASE_PATH = configuration.getProperty("orion-base-path");
 		callbackPort = Integer.parseInt(configuration.getProperty("bridge-callback-port"));
+
 	}
-	
+
 	public OrionBridge(Configuration configuration, Platform platform, String URL) throws MiddlewareException {
 		super(configuration, platform);
 		// FIXME make bridges multi-instance
-		client = new OrionApiClient(configuration.getProperties(PROPERTIES_PREFIX),URL);
+		client = new OrionApiClient(configuration.getProperties(PROPERTIES_PREFIX), URL);
 		BASE_PATH = configuration.getProperty("orion-base-path");
 
 		mwFactory = Context.mwFactory();
@@ -107,88 +109,69 @@ public class OrionBridge extends AbstractBridge {
 		callbackPort = Integer.parseInt(configuration.getProperty("bridge-callback-port"));
 	}
 
-	
 	private void create(String thingId, MessagePayload payload) throws BridgeException {
-		
+
 		// Transform to a compatible ID in FIWARE
-		//String transformedID = filterThingID(thingId);
-		//XXX Question SRIPAS --> DO we need a new  for each bridge instance??
+		// String transformedID = filterThingID(thingId);
+		// XXX Question SRIPAS --> DO we need a new for each bridge instance??
 		FIWAREv2Translator fiwareTranslator = new FIWAREv2Translator();
-		
-		//Properties properties = configuration.getProperties();
+
+		// Properties properties = configuration.getProperties();
 
 		String url = null;
-        try {
-            url = new URL(configuration.getProperty("orion-url")).toString();
-        } 
-        catch (Exception e) {
-            throw new BridgeException("Failed to read Example bridge configuration: " + e.getMessage());
-        }
-        
-		String body = null; 
 		try {
-			body = fiwareTranslator.toFormatX(payload.getJenaModel());	
-			OrionV2Utils.registerEntity(BASE_PATH,body);
+			url = new URL(configuration.getProperty("orion-url")).toString();
+		} catch (Exception e) {
+			throw new BridgeException("Failed to read Example bridge configuration: " + e.getMessage());
+		}
+
+		String body = null;
+		try {
+			body = fiwareTranslator.toFormatX(payload.getJenaModel());
+			OrionV2Utils.registerEntity(BASE_PATH, body);
 
 		} catch (IllegalSyntaxException | IOException e1) {
 			// TODO Auto-generated catch block
 			e1.printStackTrace();
 		}
-			
-		
-		/**		
-		
-		try {
 
-			//Orion library has a class 'Entity' representing a device/thing/entity capable to produce data.
-			Entity fiwareEntity = new Entity();
-			fiwareEntity.setId(transformedID);
-				
+		/**
+		 * 
+		 * try {
+		 * 
+		 * //Orion library has a class 'Entity' representing a device/thing/entity
+		 * capable to produce data. Entity fiwareEntity = new Entity();
+		 * fiwareEntity.setId(transformedID);
+		 * 
+		 * 
+		 * //TODO FF, 20-09-2017, Commented out, as things were sent without attributes.
+		 * //All hardcoded, but should work.... fiwareEntity.setType(NO_TYPE_TEXT);
+		 * Attributes attributes = new Attributes(); Attribute attr = new Attribute();
+		 * attr.setType("no_type"); attr.setValue("no_attributes");
+		 * attributes.put("no_attributes", attr); /* if
+		 * (interiotThing.containsKey(TYPE_KEY)) {
+		 * fiwareEntity.setType(interiotThing.getAttributeValue(TYPE_KEY)); } else {
+		 * fiwareEntity.setType(NO_TYPE_TEXT); } // hack for demo in Geneva. Actually,
+		 * no creation should come // without attributes. if
+		 * (interiotThing.getAttributes().size() == 0) { interiotThing.put(new
+		 * ThingAttribute("no_attributes", "no_attributes", "no_type")); }
+		 * 
+		 * Attributes attributes = createAttributes(interiotThing);
+		 */
 
-			//TODO FF, 20-09-2017, Commented out, as things were sent without attributes.
-			//All hardcoded, but should work....
-			fiwareEntity.setType(NO_TYPE_TEXT);
-			Attributes attributes = new Attributes();
-			Attribute attr = new Attribute();
-			attr.setType("no_type");
-			attr.setValue("no_attributes");
-			attributes.put("no_attributes", attr);
-			/*
-			if (interiotThing.containsKey(TYPE_KEY)) {
-				fiwareEntity.setType(interiotThing.getAttributeValue(TYPE_KEY));
-			} else {
-				fiwareEntity.setType(NO_TYPE_TEXT);
-			}
-			// hack for demo in Geneva. Actually, no creation should come
-			// without attributes.
-			if (interiotThing.getAttributes().size() == 0) {
-				interiotThing.put(new ThingAttribute("no_attributes", "no_attributes", "no_type"));
-			}
-
-			Attributes attributes = createAttributes(interiotThing);
-*/
-		
 		/*
-			try {
-				client.createEntity(fiwareEntity, null);
-				client.updateOrAppendEntityAttributes(fiwareEntity.getId(), attributes, fiwareEntity.getType(), null);
-			} catch (ApiException e) {
-				if (e.getCode() != ENTITY_EXISTS_ERROR_CODE) {
-					throw new BridgeException(e);
-				}
-			}
-		} catch (Exception e) {
-			throw new BridgeException(e);
-		}
-
-		*/
-}
-
-
-
+		 * try { client.createEntity(fiwareEntity, null);
+		 * client.updateOrAppendEntityAttributes(fiwareEntity.getId(), attributes,
+		 * fiwareEntity.getType(), null); } catch (ApiException e) { if (e.getCode() !=
+		 * ENTITY_EXISTS_ERROR_CODE) { throw new BridgeException(e); } } } catch
+		 * (Exception e) { throw new BridgeException(e); }
+		 * 
+		 */
+	}
 
 	/**
 	 * Replace forbidden characters in FIWARE to be compatible
+	 * 
 	 * @param thingId
 	 * @return
 	 */
@@ -210,27 +193,24 @@ public class OrionBridge extends AbstractBridge {
 	}
 
 	/*
-	private Thing read(Query query) throws BridgeException {
-		try {
-			OrionQuery _query = (OrionQuery) query;
+	 * private Thing read(Query query) throws BridgeException { try { OrionQuery
+	 * _query = (OrionQuery) query;
+	 * 
+	 * Entity retrievedEntity; Attributes retrievedAttributes;
+	 * 
+	 * retrievedEntity = client.retrieveEntity(query.getEntityId(), query.getType(),
+	 * query.getAttributesInCommaSeparatedString(),
+	 * _query.getOptionsInCommaSeparatedString());
+	 * 
+	 * retrievedAttributes = client.retrieveEntityAttributes(query.getEntityId(),
+	 * query.getType(), query.getAttributesInCommaSeparatedString(),
+	 * _query.getOptionsInCommaSeparatedString());
+	 * 
+	 * return fiwareEntityToInteriotThing(retrievedEntity, retrievedAttributes); }
+	 * catch (Exception e) { throw new BridgeException(e); } }
+	 * 
+	 */
 
-			Entity retrievedEntity;
-			Attributes retrievedAttributes;
-
-			retrievedEntity = client.retrieveEntity(query.getEntityId(), query.getType(),
-					query.getAttributesInCommaSeparatedString(), _query.getOptionsInCommaSeparatedString());
-
-			retrievedAttributes = client.retrieveEntityAttributes(query.getEntityId(), query.getType(),
-					query.getAttributesInCommaSeparatedString(), _query.getOptionsInCommaSeparatedString());
-
-			return fiwareEntityToInteriotThing(retrievedEntity, retrievedAttributes);
-		} catch (Exception e) {
-			throw new BridgeException(e);
-		}
-	}
-
-*/
-	
 	private void publishObservation(String thingId, Message message) throws BridgeException, MessageException {
 		// FIXME HACK: getAttributeFromPayload assumes that
 		// there is an observation inside the payload
@@ -238,44 +218,38 @@ public class OrionBridge extends AbstractBridge {
 		String key = INTERMWDemoUtils.getAttrKeyToUpdateFromPayload(message.getPayload());
 		String value = INTERMWDemoUtils.getAttrValueToUpdateFromPayload(message.getPayload());
 		String type = INTERMWDemoUtils.getAttrTypeToUpdateFromPayload(message.getPayload());
-		
+
 		String transformedID = filterThingID(thingId);
 
 		// Transform to a compatible ID in FIWARE
-		//String transformedID = filterThingID(thingId);
-		//XXX Question SRIPAS --> DO we need a new  for each bridge instance??
+		// String transformedID = filterThingID(thingId);
+		// XXX Question SRIPAS --> DO we need a new for each bridge instance??
 		FIWAREv2Translator fiwareTranslator = new FIWAREv2Translator();
-		
-		//Properties properties = configuration.getProperties();
-       
-		String body = null; 
+
+		// Properties properties = configuration.getProperties();
+
+		String body = null;
 		try {
-			body = fiwareTranslator.toFormatX(message.getPayload().getJenaModel());	
+			body = fiwareTranslator.toFormatX(message.getPayload().getJenaModel());
 			OrionV2Utils.publishEntityObservation(BASE_PATH, thingId, body);
 		} catch (IllegalSyntaxException | IOException e1) {
 			// TODO Auto-generated catch block
 			e1.printStackTrace();
 		}
-		
-	/*	
-		try {
-			Entity fiwareEntity = new Entity();
-			fiwareEntity.setId(transformedID);
 
-			Attributes attributes = new Attributes();
-			Attribute attr = new Attribute();
-			if(type == null || type.equals(""))
-				type = DEFAULT_ATTRIBUTE_TYPE;
-			attr.setType(type);
-			attr.setValue(value);
-			attributes.put(filterThingAttrKey(key), attr);
-
-			client.updateOrAppendEntityAttributes(fiwareEntity.getId(), attributes, fiwareEntity.getType(), null);	
-		
-		} catch (Exception e) {
-			throw new BridgeException(e);
-		}
-		*/
+		/*
+		 * try { Entity fiwareEntity = new Entity(); fiwareEntity.setId(transformedID);
+		 * 
+		 * Attributes attributes = new Attributes(); Attribute attr = new Attribute();
+		 * if(type == null || type.equals("")) type = DEFAULT_ATTRIBUTE_TYPE;
+		 * attr.setType(type); attr.setValue(value);
+		 * attributes.put(filterThingAttrKey(key), attr);
+		 * 
+		 * client.updateOrAppendEntityAttributes(fiwareEntity.getId(), attributes,
+		 * fiwareEntity.getType(), null);
+		 * 
+		 * } catch (Exception e) { throw new BridgeException(e); }
+		 */
 	}
 
 	private String filterThingAttrKey(String key) {
@@ -283,36 +257,34 @@ public class OrionBridge extends AbstractBridge {
 		// Check http://telefonicaid.github.io/fiware-orion/api/v2/stable/ Field
 		// syntax restrictions
 		// &, ?, / and #.
-			String newKey;
-			if (key.contains("http://inter-iot.eu/ex/")) {
-				newKey = key.replace("http://inter-iot.eu/ex/", "");
-			} else if (key.contains("&")) {
-				newKey = key.replace("&", "_AND_");
-				} else if (key.contains("?")) {
-				newKey = key.replace("?", "_QUESTION_");
-			} else if (key.contains("/")) {
-				newKey = key.replace("/", "_SLASH_");
-			} else if (key.contains("#")) {
-				newKey = key.replace("#", "_NUMBERSIGN_");
-			}
-			else {
-				newKey = key;
-			}
+		String newKey;
+		if (key.contains("http://inter-iot.eu/ex/")) {
+			newKey = key.replace("http://inter-iot.eu/ex/", "");
+		} else if (key.contains("&")) {
+			newKey = key.replace("&", "_AND_");
+		} else if (key.contains("?")) {
+			newKey = key.replace("?", "_QUESTION_");
+		} else if (key.contains("/")) {
+			newKey = key.replace("/", "_SLASH_");
+		} else if (key.contains("#")) {
+			newKey = key.replace("#", "_NUMBERSIGN_");
+		} else {
+			newKey = key;
+		}
 
 		return newKey;
 	}
 
 	/**
-	 * How to implement the functionality of deleting only one type with the
-	 * ID???
+	 * How to implement the functionality of deleting only one type with the ID???
 	 * 
 	 * @param thingId
-	 * @throws IOException 
+	 * @throws IOException
 	 */
 	private void delete(String thingId) throws BridgeException, IOException {
 
 		OrionV2Utils.unregisterEntity(BASE_PATH, thingId);
-		
+
 		String transformedID = filterThingID(thingId);
 
 		try {
@@ -344,7 +316,8 @@ public class OrionBridge extends AbstractBridge {
 				metadata.setConversationId(conversationId);
 				metadata.addMessageType(URIManagerMessageMetadata.MessageTypesEnum.OBSERVATION);
 				metadata.addMessageType(URIManagerMessageMetadata.MessageTypesEnum.RESPONSE);
-				//metadata.setSenderPlatformId(URI.create(platform.getId().getId()));	OLD MESSAGING CODE
+				// metadata.setSenderPlatformId(URI.create(platform.getId().getId())); OLD
+				// MESSAGING CODE
 				metadata.setSenderPlatformId(new EntityID(platform.getId().getId()));
 				callbackMessage.setMetadata(metadata);
 				// A test
@@ -380,12 +353,9 @@ public class OrionBridge extends AbstractBridge {
 		} catch (Exception e) {
 			throw new BridgeException(e);
 		}
-	
-	
+
 	}
 
-	
-	
 	private static String initHttpListener() {
 
 		return null;
@@ -400,10 +370,9 @@ public class OrionBridge extends AbstractBridge {
 		}
 	}
 
-
 	/**
-	 * XXX NOT TESTED public void cleanAllSubscriptons() throws BridgeException
-	 * { while (cleanSubscriptions()); }
+	 * XXX NOT TESTED public void cleanAllSubscriptons() throws BridgeException {
+	 * while (cleanSubscriptions()); }
 	 */
 
 	/**
@@ -427,7 +396,6 @@ public class OrionBridge extends AbstractBridge {
 				i++;
 			}
 
-
 		} catch (ApiException e) {
 			throw new BridgeException(e);
 		}
@@ -440,49 +408,39 @@ public class OrionBridge extends AbstractBridge {
 	 * @return
 	 */
 	/*
-	private Thing fiwareEntityToInteriotThing(Entity entity, Attributes retrievedAttributes) {
-		Thing interiotThing = mwFactory.createThing(new ThingId(entity.getId()));
-
-		if (entity.getType() != null) {
-			ThingAttribute attribute = mwFactory.createThingAttribute(TYPE_KEY, entity.getType());
-			interiotThing.put(attribute);
-		}
-
-		for (String attributeKey : retrievedAttributes.keySet()) {
-			ThingAttribute attribute = mwFactory.createThingAttribute(attributeKey,
-					retrievedAttributes.get(attributeKey).getValue());
-			interiotThing.put(attribute);
-		}
-
-		return interiotThing;
-	}
-
-	protected Attributes createAttributes(Thing interiotThing) {
-		Attributes attributes = new Attributes();
-		for (ThingAttribute attribute : interiotThing) {
-			if (attribute.getKey() != null && attribute.getKey().equals(TYPE_KEY)) {
-				continue;
-			}
-
-			Attribute attr = new Attribute();
-			attr.setType(getType(attribute));
-			attr.setValue(attribute.getValue().toString());
-			attributes.put(attribute.getKey(), attr);
-		}
-
-		return attributes;
-	}
-
-	protected String getType(ThingAttribute attribute) {
-		String type = attribute.getType();
-
-		if (StringUtils.isEmpty(type)) {
-			type = DEFAULT_ATTRIBUTE_TYPE;
-		}
-
-		return type;
-	}
-*/
+	 * private Thing fiwareEntityToInteriotThing(Entity entity, Attributes
+	 * retrievedAttributes) { Thing interiotThing = mwFactory.createThing(new
+	 * ThingId(entity.getId()));
+	 * 
+	 * if (entity.getType() != null) { ThingAttribute attribute =
+	 * mwFactory.createThingAttribute(TYPE_KEY, entity.getType());
+	 * interiotThing.put(attribute); }
+	 * 
+	 * for (String attributeKey : retrievedAttributes.keySet()) { ThingAttribute
+	 * attribute = mwFactory.createThingAttribute(attributeKey,
+	 * retrievedAttributes.get(attributeKey).getValue());
+	 * interiotThing.put(attribute); }
+	 * 
+	 * return interiotThing; }
+	 * 
+	 * protected Attributes createAttributes(Thing interiotThing) { Attributes
+	 * attributes = new Attributes(); for (ThingAttribute attribute : interiotThing)
+	 * { if (attribute.getKey() != null && attribute.getKey().equals(TYPE_KEY)) {
+	 * continue; }
+	 * 
+	 * Attribute attr = new Attribute(); attr.setType(getType(attribute));
+	 * attr.setValue(attribute.getValue().toString());
+	 * attributes.put(attribute.getKey(), attr); }
+	 * 
+	 * return attributes; }
+	 * 
+	 * protected String getType(ThingAttribute attribute) { String type =
+	 * attribute.getType();
+	 * 
+	 * if (StringUtils.isEmpty(type)) { type = DEFAULT_ATTRIBUTE_TYPE; }
+	 * 
+	 * return type; }
+	 */
 	class Subject {
 		public Entities[] entities;
 
@@ -555,17 +513,17 @@ public class OrionBridge extends AbstractBridge {
 			} else if (messageTypesEnumSet.contains(URIManagerMessageMetadata.MessageTypesEnum.THING_UPDATE)) {
 
 				if (messageTypesEnumSet.contains(URIManagerMessageMetadata.MessageTypesEnum.OBSERVATION)) {
-					
+
 					Set<String> entities = INTERMWDemoUtils.getEntityIDsFromPayload(message.getPayload(),
 							INTERMWDemoUtils.EntityTypeDevice);
-					
+
 					if (entities.isEmpty())
 						throw new BridgeException("No entities of type Device found in the Payload");
 					String entity = entities.iterator().next();
 
 					System.out.println("Updating thing:" + entity);
 					publishObservation(entity, message);
-				
+
 				}
 
 			} else if (messageTypesEnumSet.contains(URIManagerMessageMetadata.MessageTypesEnum.QUERY)) {
@@ -577,10 +535,11 @@ public class OrionBridge extends AbstractBridge {
 					throw new PayloadException("No entities of type Device found in the Payload");
 
 				throw new BridgeException("QUERY not implemented");
-				/*String entity = entities.iterator().next();
-
-				Query q = new DefaultQueryImpl(new ThingId(entity));
-				read(q);*/
+				/*
+				 * String entity = entities.iterator().next();
+				 * 
+				 * Query q = new DefaultQueryImpl(new ThingId(entity)); read(q);
+				 */
 
 			} else if (messageTypesEnumSet.contains(URIManagerMessageMetadata.MessageTypesEnum.SUBSCRIBE)) {
 				// Assuming the subscribing to one thing
@@ -590,8 +549,7 @@ public class OrionBridge extends AbstractBridge {
 					throw new PayloadException("No entities of type Device found in the Payload");
 
 				String entity = entities.iterator().next();
-				subscribe(entity,
-						message.getMetadata().getConversationId().orElse(""));
+				subscribe(entity, message.getMetadata().getConversationId().orElse(""));
 
 			} else if (messageTypesEnumSet.contains(URIManagerMessageMetadata.MessageTypesEnum.UNSUBSCRIBE)) {
 				String conversationID = message.getMetadata().getConversationId().orElse("");
@@ -607,9 +565,8 @@ public class OrionBridge extends AbstractBridge {
 						"The action is labelled as UNRECOGNIZED and thus is unprocessable by component "
 								+ this.getClass().getName() + " in platform " + platform.getId().getId());
 			} else {
-				throw new UnknownActionException(
-						"The message type is not properly handled and can't be processed"
-								+ this.getClass().getName() + " in platform " + platform.getId().getId());
+				throw new UnknownActionException("The message type is not properly handled and can't be processed"
+						+ this.getClass().getName() + " in platform " + platform.getId().getId());
 			}
 			// TODO For now we create a generic response message. Think
 			// about sending a specific status
@@ -622,65 +579,113 @@ public class OrionBridge extends AbstractBridge {
 				throw new MessageException("error publishing response", e);
 			}
 
-		} catch (MessageException | UnsupportedActionException | IllegalActionException | UnknownActionException | IOException e) {
+		} catch (MessageException | UnsupportedActionException | IllegalActionException | UnknownActionException
+				| IOException e) {
 			throw new BridgeException(e.toString());
 		}
 
 	}
 
 	@Override
-	public void discover(Message arg0) {
-		// TODO Auto-generated method stub
-		
+	public void discover(Message message) {
+		try {
+
+			// get the body from the http response. HttpResponse comes from the http request
+			// to the FIWATRE Platform.
+			String responseBody = OrionV2Utils.discoverEntities(BASE_PATH).getEntity().getContent().toString();
+			// create a new internal response message for INTER-MW
+			Message responseMessage = createResponseMessage(message);
+			// instantiates a FIWARE syntactic translator
+			FIWAREv2Translator translator = new FIWAREv2Translator();
+			// translate from plain FIWARE-json to FIWARE json-ld. Gets a JENA (RDF) Model
+			Model translatedModel = translator.toJenaModel(responseBody);
+			// create a new message payload for the response message
+			MessagePayload responsePayload = new MessagePayload(translatedModel);
+			// attach the payload to the message
+			responseMessage.setPayload(responsePayload);
+			// publish the message to INTER-MW. The publisher is global (and it is tested)
+			publisher.publish(responseMessage);
+
+		} catch (IOException | BrokerException e) {
+			e.printStackTrace();
+		}
 	}
 
 	@Override
-	public void query(Message arg0) {
+	public void query(Message message) {
 		// TODO Auto-generated method stub
-		
+
 	}
 
 	@Override
 	public void registerPlatform(Message arg0) {
 		// TODO Auto-generated method stub
-		
+
 	}
 
 	@Override
 	public void registerThing(Message arg0) {
 		// TODO Auto-generated method stub
-		
+
 	}
 
 	@Override
-	public void subscribe(Message arg0) {
-		// TODO Auto-generated method stub
-		
+	public void subscribe(Message message) {
+
+		FIWAREv2Translator translator = new FIWAREv2Translator();
+		String responseBody = null;
+		Message responseMessage = null;
+		try {
+			//Get the entityIds from the payload. Will be ready in Messages v0.7
+			ArrayList<String> myFalseEntityList = new ArrayList<>();
+			String requestBody = translator.toFormatX(message.getPayload().getJenaModel());
+			responseBody = OrionV2Utils.createSubscription(BASE_PATH, requestBody).getEntity().toString();
+			// translate from plain FIWARE-json to FIWARE json-ld. Gets a JENA (RDF) Model
+			Model translatedModel = translator.toJenaModel(responseBody);
+			// create a new message payload for the response message
+			MessagePayload responsePayload = new MessagePayload(translatedModel);
+			// attach the payload to the message
+			responseMessage.setPayload(responsePayload);
+			// publish the message to INTER-MW. The publisher is global (and it is tested)
+			publisher.publish(responseMessage);
+			
+			
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (IllegalSyntaxException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (BrokerException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+
 	}
 
 	@Override
 	public void unregisterPlatform(Message arg0) {
-		// TODO Auto-generated method stub
-		
+
 	}
 
 	@Override
 	public void unregisterThing(Message arg0) {
-		// TODO Auto-generated method stub
-		
+		// Get the entity id to which be subscribed
+		// (to be retrieved from the message)
+		String mockEntityId = "myFalseEntityId";
+
 	}
 
 	@Override
 	public void unsubscribe(Message arg0) {
 		// TODO Auto-generated method stub
-		
+
 	}
 
 	@Override
 	public void updateThing(Message arg0) {
 		// TODO Auto-generated method stub
-		
-	}
 
+	}
 
 }
