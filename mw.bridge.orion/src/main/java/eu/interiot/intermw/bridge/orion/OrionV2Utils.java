@@ -150,20 +150,18 @@ public class OrionV2Utils {
     }
     
     public static String filterThingID(String thingId) {
-		String filteredString;
+    	String filteredString = thingId;
 		// Check algorithm is optimal+
 		if (thingId.contains("http://inter-iot.eu/dev/")) {
 			filteredString = thingId.replace("http://inter-iot.eu/dev/", "");
-			return filteredString;
-		} else if (thingId.contains("/")) {
-			filteredString = thingId.replace("/", "%");
-			return filteredString;
-		} else if (thingId.contains("#")) {
-			filteredString = thingId.replace("#", "+");
-			return filteredString;
-		} else {
-			return thingId;
+		} 
+		if (thingId.contains("/")) {
+			filteredString = thingId.replace("/", "-");
 		}
+		if (thingId.contains("#")) {
+			filteredString = thingId.replace("#", "+");
+		}
+		return filteredString;
 	}
 	    
     public static String buildJsonWithIds(String... entityId){

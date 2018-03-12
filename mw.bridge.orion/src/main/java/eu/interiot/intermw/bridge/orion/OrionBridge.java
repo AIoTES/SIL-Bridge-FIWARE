@@ -170,29 +170,6 @@ public class OrionBridge extends AbstractBridge {
 		 */
 	}
 
-	/**
-	 * Replace forbidden characters in FIWARE to be compatible
-	 * 
-	 * @param thingId
-	 * @return
-	 */
-	private String filterThingID(String thingId) {
-		String filteredString;
-		// Check algorithm is optimal+
-		if (thingId.contains("http://inter-iot.eu/dev/")) {
-			filteredString = thingId.replace("http://inter-iot.eu/dev/", "");
-			return filteredString;
-		} else if (thingId.contains("/")) {
-			filteredString = thingId.replace("/", "%");
-			return filteredString;
-		} else if (thingId.contains("#")) {
-			filteredString = thingId.replace("#", "+");
-			return filteredString;
-		} else {
-			return thingId;
-		}
-	}
-
 	/*
 	 * private Thing read(Query query) throws BridgeException { try { OrionQuery
 	 * _query = (OrionQuery) query;
@@ -220,7 +197,7 @@ public class OrionBridge extends AbstractBridge {
 		String value = INTERMWDemoUtils.getAttrValueToUpdateFromPayload(message.getPayload());
 		String type = INTERMWDemoUtils.getAttrTypeToUpdateFromPayload(message.getPayload());
 
-		String transformedID = filterThingID(thingId);
+		String transformedID = OrionV2Utils.filterThingID(thingId);
 
 		// Transform to a compatible ID in FIWARE
 		// String transformedID = filterThingID(thingId);
@@ -232,7 +209,7 @@ public class OrionBridge extends AbstractBridge {
 		String body = null;
 		try {
 			body = fiwareTranslator.toFormatX(message.getPayload().getJenaModel());
-			OrionV2Utils.publishEntityObservation(BASE_PATH, thingId, body);
+			OrionV2Utils.publishEntityObservation(BASE_PATH, transformedID, body);
 		} catch (IllegalSyntaxException | IOException e1) {
 			// TODO Auto-generated catch block
 			e1.printStackTrace();
@@ -284,7 +261,7 @@ public class OrionBridge extends AbstractBridge {
 	 */
 	private void delete(String thingId) throws BridgeException, IOException {
 
-		String transformedID = filterThingID(thingId);
+		String transformedID = OrionV2Utils.filterThingID(thingId);
 		OrionV2Utils.unregisterEntity(BASE_PATH, transformedID);
 		
 		/*
@@ -489,77 +466,43 @@ public class OrionBridge extends AbstractBridge {
 		Set<URIManagerMessageMetadata.MessageTypesEnum> messageTypesEnumSet = message.getMetadata().getMessageTypes();
 		try {
 			if (messageTypesEnumSet.contains(URIManagerMessageMetadata.MessageTypesEnum.THING_REGISTER)) {
-				// TODO Discuss with pawel EntityTypeDevice to enum
-				Set<String> entityIds = INTERMWDemoUtils.getEntityIDsFromPayload(message.getPayload(), INTERMWDemoUtils.EntityTypeDevice);
-
-				// XXX Discuss with matevz, flavio At this point we can
-				// do two things, iterate over the list and do atomic
-				// creations or introduce a bulk creation method
-				// For the moment. It is implemented the first option,
-				// in order to preserve the Bridge API TODO consider
-				// changing it
-
-				entityIds = INTERMWDemoUtils.getEntityIDsFromPayload(message.getPayload(), "http://inter-iot.eu/syntax/FIWAREv2#Entity");
-				
-				for (String entityId : entityIds) {
-					// TODO Loop over the payload to include possible
-					// observations in the creation or a schema of the
-					// 'Thing'
-					create(entityId, message.getPayload());
-				}
-			} else if (messageTypesEnumSet.contains(URIManagerMessageMetadata.MessageTypesEnum.THING_UNREGISTER)) {
-				Set<String> entityIds = INTERMWDemoUtils.getEntityIDsFromPayload(message.getPayload(), INTERMWDemoUtils.EntityTypeDevice);
-				for (String entityId : entityIds) {
-					delete(entityId);
-				}
-			} else if (messageTypesEnumSet.contains(URIManagerMessageMetadata.MessageTypesEnum.THING_UPDATE)) {
-
-				if (messageTypesEnumSet.contains(URIManagerMessageMetadata.MessageTypesEnum.OBSERVATION)) {
-
-					Set<String> entities = INTERMWDemoUtils.getEntityIDsFromPayload(message.getPayload(), INTERMWDemoUtils.EntityTypeDevice);
-
-					if (entities.isEmpty())
-						throw new BridgeException("No entities of type Device found in the Payload");
-					String entity = entities.iterator().next();
-
-					System.out.println("Updating thing:" + entity);
-					publishObservation(entity, message);
-
-				}
-
-			} else if (messageTypesEnumSet.contains(URIManagerMessageMetadata.MessageTypesEnum.QUERY)) {
+				registerThing(message);
+			} 
+			else if (messageTypesEnumSet.contains(URIManagerMessageMetadata.MessageTypesEnum.THING_UNREGISTER)) {
+				unregisterThing(message);
+			} 
+			else if (messageTypesEnumSet.contains(URIManagerMessageMetadata.MessageTypesEnum.THING_UPDATE)
+					&& messageTypesEnumSet.contains(URIManagerMessageMetadata.MessageTypesEnum.OBSERVATION)) {
+				updateThing(message);
+			}	 
+			else if (messageTypesEnumSet.contains(URIManagerMessageMetadata.MessageTypesEnum.QUERY)) {
 				query(message);
-			} else if (messageTypesEnumSet.contains(URIManagerMessageMetadata.MessageTypesEnum.SUBSCRIBE)) {
-				// Assuming the subscribing to one thing
-				/*
-				Set<String> entities = INTERMWDemoUtils.getEntityIDsFromPayload(message.getPayload(), INTERMWDemoUtils.EntityTypeDevice);
-				if (entities.isEmpty())
-					throw new PayloadException("No entities of type Device found in the Payload");
-
-				String entity = entities.iterator().next();
-				subscribe(entity, message.getMetadata().getConversationId().orElse(""));
-				*/
+			} 
+			else if (messageTypesEnumSet.contains(URIManagerMessageMetadata.MessageTypesEnum.SUBSCRIBE)) {
 				subscribe(message);
-			} else if (messageTypesEnumSet.contains(URIManagerMessageMetadata.MessageTypesEnum.UNSUBSCRIBE)) {
-				String conversationID = message.getMetadata().getConversationId().orElse("");
-				unsubscribe(new SubscriptionId(conversationID));
-			} else if (messageTypesEnumSet.contains(URIManagerMessageMetadata.MessageTypesEnum.DISCOVERY)) {
-				throw new UnsupportedActionException("The action DISCOVERY is currently unsupported");
-			} else if (messageTypesEnumSet.contains(URIManagerMessageMetadata.MessageTypesEnum.PLATFORM_REGISTER)) {
-
-			} else if (messageTypesEnumSet.contains(URIManagerMessageMetadata.MessageTypesEnum.PLATFORM_UNREGISTER)) {
-				throw new IllegalActionException("The action PLATFORM UNREGISTER is not allowed here");
-			} else if (messageTypesEnumSet.contains(URIManagerMessageMetadata.MessageTypesEnum.UNRECOGNIZED)) {
-				throw new UnknownActionException(
-						"The action is labelled as UNRECOGNIZED and thus is unprocessable by component "
-								+ this.getClass().getName() + " in platform " + platform.getId().getId());
-			} else {
-				throw new UnknownActionException("The message type is not properly handled and can't be processed"
-						+ this.getClass().getName() + " in platform " + platform.getId().getId());
+			} 
+			else if (messageTypesEnumSet.contains(URIManagerMessageMetadata.MessageTypesEnum.UNSUBSCRIBE)) {
+				unsubscribe(message);
+			} 
+			else if (messageTypesEnumSet.contains(URIManagerMessageMetadata.MessageTypesEnum.DISCOVERY)) {
+				discover(message);
+			} 
+			else if (messageTypesEnumSet.contains(URIManagerMessageMetadata.MessageTypesEnum.PLATFORM_REGISTER)) {
+				registerPlatform(message);
+			} 
+			else if (messageTypesEnumSet.contains(URIManagerMessageMetadata.MessageTypesEnum.PLATFORM_UNREGISTER)) {
+				unregisterPlatform(message);
+			} 
+			else if (messageTypesEnumSet.contains(URIManagerMessageMetadata.MessageTypesEnum.UNRECOGNIZED)) {
+				throw new UnknownActionException("The action is labelled as UNRECOGNIZED and thus is unprocessable by component " + this.getClass().getName() + " in platform " + platform.getId().getId());
+			} 
+			else {
+				throw new UnknownActionException("The message type is not properly handled and can't be processed" + this.getClass().getName() + " in platform " + platform.getId().getId());
 			}
 			// TODO For now we create a generic response message. Think
 			// about sending a specific status
 
+			/*
 			Message responseMessage = createResponseMessage(message);
 			try {
 				publisher.publish(responseMessage);
@@ -567,9 +510,9 @@ public class OrionBridge extends AbstractBridge {
 				log.error("Error publishing response");
 				throw new MessageException("error publishing response", e);
 			}
+			*/
 
-		} catch (MessageException | UnsupportedActionException | IllegalActionException | UnknownActionException
-				| IOException e) {
+		} catch (Exception e) {
 			throw new BridgeException(e.toString());
 		}
 
@@ -578,7 +521,6 @@ public class OrionBridge extends AbstractBridge {
 	@Override
 	public void discover(Message message) {
 		try {
-
 			// get the body from the http response. HttpResponse comes from the http request
 			// to the FIWATRE Platform.
 			String responseBody = OrionV2Utils.discoverEntities(BASE_PATH).getEntity().getContent().toString();
@@ -594,8 +536,8 @@ public class OrionBridge extends AbstractBridge {
 			responseMessage.setPayload(responsePayload);
 			// publish the message to INTER-MW. The publisher is global (and it is tested)
 			publisher.publish(responseMessage);
-
-		} catch (IOException | BrokerException e) {
+		} 
+		catch (IOException | BrokerException e) {
 			e.printStackTrace();
 		}
 	}
@@ -621,8 +563,67 @@ public class OrionBridge extends AbstractBridge {
 	}
 
 	@Override
-	public void registerThing(Message arg0) {
-		// TODO Auto-generated method stub
+	public void registerThing(Message message) {
+		try {
+			// TODO Discuss with pawel EntityTypeDevice to enum
+			Set<String> entityIds = INTERMWDemoUtils.getEntityIDsFromPayload(message.getPayload(), INTERMWDemoUtils.EntityTypeDevice);
+	
+			// XXX Discuss with matevz, flavio At this point we can
+			// do two things, iterate over the list and do atomic
+			// creations or introduce a bulk creation method
+			// For the moment. It is implemented the first option,
+			// in order to preserve the Bridge API TODO consider
+			// changing it
+			// TODO This type will be changed when the new message classes are finished
+			entityIds = INTERMWDemoUtils.getEntityIDsFromPayload(message.getPayload(), "http://inter-iot.eu/syntax/FIWAREv2#Entity");
+			
+			for (String entityId : entityIds) {
+				// TODO Loop over the payload to include possible
+				// observations in the creation or a schema of the
+				// 'Thing'				
+				create(entityId, message.getPayload());				
+			}
+		} 
+		catch (BridgeException e) {
+			logger.error("Error registering thing: " + e.getMessage());
+		}
+	}
+	
+	@Override
+	public void updateThing(Message message) {
+		try{
+			// TODO Discuss with pawel EntityTypeDevice to enum
+			Set<String> entityIds = INTERMWDemoUtils.getEntityIDsFromPayload(message.getPayload(), "http://inter-iot.eu/syntax/FIWAREv2#Entity");
+
+			for(String entityId : entityIds){
+				System.out.println("Updating thing:" + entityId);
+				publishObservation(entityId, message);
+			}
+		}
+		catch (Exception e){
+			logger.error("Error updating thing: " + e.getMessage());
+		}
+	}
+	
+	@Override
+	public void unregisterThing(Message message) {
+		// Get the entity id to which be subscribed
+		// (to be retrieved from the message)
+		//String mockEntityId = "myFalseEntityId";
+		try {
+			// TODO Discuss with pawel EntityTypeDevice to enum
+			Set<String> entityIds = INTERMWDemoUtils.getEntityIDsFromPayload(message.getPayload(), "http://inter-iot.eu/syntax/FIWAREv2#Entity");
+			
+			for (String entityId : entityIds) {
+				// TODO Loop over the payload to include possible
+				// observations in the creation or a schema of the
+				// 'Thing'				
+				delete(entityId);				
+			}
+		} 
+		catch (Exception e) {
+			logger.error("Error unregistering thing: " + e.getMessage());
+		}
 
 	}
 
@@ -643,9 +644,7 @@ public class OrionBridge extends AbstractBridge {
 			// attach the payload to the message
 			responseMessage.setPayload(responsePayload);
 			// publish the message to INTER-MW. The publisher is global (and it is tested)
-			publisher.publish(responseMessage);
-			
-			
+			publisher.publish(responseMessage);			
 		} catch (IOException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
@@ -656,32 +655,22 @@ public class OrionBridge extends AbstractBridge {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
+	}
+
+	@Override
+	public void unregisterPlatform(Message message) {
 
 	}
 
 	@Override
-	public void unregisterPlatform(Message arg0) {
-
-	}
-
-	@Override
-	public void unregisterThing(Message arg0) {
-		// Get the entity id to which be subscribed
-		// (to be retrieved from the message)
-		String mockEntityId = "myFalseEntityId";
-
-	}
-
-	@Override
-	public void unsubscribe(Message arg0) {
+	public void unsubscribe(Message message) {
 		// TODO Auto-generated method stub
-
+		try{
+			String conversationID = message.getMetadata().getConversationId().orElse("");
+			unsubscribe(new SubscriptionId(conversationID));
+		}
+		catch (Exception e){ 
+			logger.error("Error unsubscribing: " + e.getMessage());
+		}
 	}
-
-	@Override
-	public void updateThing(Message arg0) {
-		// TODO Auto-generated method stub
-
-	}
-
 }
