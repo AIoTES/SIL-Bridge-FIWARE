@@ -610,8 +610,11 @@ public class OrionBridge extends AbstractBridge {
 
 	@Override
 	public void query(Message message) {
-		// TODO Auto-generated method stub
-
+		// TODO Review url and change the method's entityId
+		Set<String> entityIds = INTERMWDemoUtils.getEntityIDsFromPayload(message.getPayload(), "http://inter-iot.eu/syntax/FIWAREv2#Entity");
+		for (String entityId : entityIds) {
+			OrionV2Utils.queryEntityById(BASE_PATH, entityId);
+		}
 	}
 
 	@Override
@@ -628,7 +631,6 @@ public class OrionBridge extends AbstractBridge {
 
 	@Override
 	public void subscribe(Message message) {
-
 		FIWAREv2Translator translator = new FIWAREv2Translator();
 		String responseBody = null;
 		Message responseMessage = null;

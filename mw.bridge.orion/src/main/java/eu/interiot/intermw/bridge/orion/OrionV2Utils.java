@@ -62,9 +62,10 @@ public class OrionV2Utils {
 	
 	//TODO Check ontology alignment with Pawel/Kasia
 	//TODO Build a shortcut to query a single entity by id
-	public static HttpResponse queryEntityById(String baseUrl, String body) throws IOException {
-		String completeUrl = baseUrl + FIWARE_ENTITY_QUERY+"/"+body;
-		return postToFiware(completeUrl, body); 
+	public static HttpResponse queryEntityById(String baseUrl, String entityId) throws IOException {
+		String completeUrl = baseUrl + FIWARE_ENTITY_QUERY+"/"+entityId;
+		//return postToFiware(completeUrl, body);
+		return getFromFiware(completeUrl); 
 	}
     
 	
