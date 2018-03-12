@@ -14,6 +14,9 @@ import org.apache.http.impl.client.HttpClientBuilder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.google.gson.JsonArray;
+import com.google.gson.JsonObject;
+
 public class OrionV2Utils {
 
 	private static CloseableHttpClient httpClient;
@@ -63,9 +66,9 @@ public class OrionV2Utils {
 	//TODO Check ontology alignment with Pawel/Kasia
 	//TODO Build a shortcut to query a single entity by id
 	public static HttpResponse queryEntityById(String baseUrl, String entityId) throws IOException {
-		String completeUrl = baseUrl + FIWARE_ENTITY_QUERY+"/"+entityId;
-		//return postToFiware(completeUrl, body);
-		return getFromFiware(completeUrl); 
+		String completeUrl = baseUrl + FIWARE_ENTITY_QUERY;
+		String body = buildJsonWithIds(entityId);
+		return postToFiware(completeUrl, body); 
 	}
     
 	
@@ -162,5 +165,19 @@ public class OrionV2Utils {
 			return thingId;
 		}
 	}
-	
+	    
+    public static String buildJsonWithIds(String... entityId){
+    	JsonObject jsonObjectFinal = new JsonObject();
+    	JsonArray jsonArray = new JsonArray();
+    	for (String id : entityId) {
+    		String transformedID = filterThingID(id);
+        	
+        	JsonObject jsonObjectId = new JsonObject(); 
+        	jsonObjectId.addProperty("id", transformedID);       	
+        	jsonArray.add(jsonObjectId);        	
+		}    	
+    	jsonObjectFinal.add("entities", jsonArray);
+    	
+    	return jsonObjectFinal.toString();
+    }
 }

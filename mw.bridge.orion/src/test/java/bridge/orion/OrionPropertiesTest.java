@@ -59,12 +59,18 @@ public class OrionPropertiesTest {
 			System.out.println(thingRegisterJson);
 			Message thingRegisterMsg = new Message(thingRegisterJson);
 			
+			URL url3 = Resources.getResource("messages/thing-query-FIWARE.json");
+			String thingQueryJson1 = Resources.toString(url3, Charsets.UTF_8);
+			System.out.println(thingQueryJson1);
+			Message thingQueryMsg = new Message(thingQueryJson1);
+			
 			orionBridge = new OrionBridge(configuration, platform);
 
 			String basepath = configuration.getProperty("orion-base-path");
 			assertNotNull(basepath);
 
-			orionBridge.send(thingRegisterMsg);
+			//orionBridge.send(thingRegisterMsg);
+			orionBridge.send(thingQueryMsg);
 			//FIWAREv2Translator translator = new FIWAREv2Translator();			
 			//String body = translator.toFormatX(thingRegisterMsg.getPayload().getJenaModel());
 			

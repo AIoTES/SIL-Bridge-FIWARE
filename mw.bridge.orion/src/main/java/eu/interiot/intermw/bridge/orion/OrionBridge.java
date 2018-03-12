@@ -27,6 +27,7 @@ import java.util.List;
 import java.util.Set;
 import java.util.UUID;
 
+import org.apache.http.HttpResponse;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.jena.rdf.model.Model;
 import org.interiot.fiware.ngsiv2.client.ApiException;
@@ -283,15 +284,16 @@ public class OrionBridge extends AbstractBridge {
 	 */
 	private void delete(String thingId) throws BridgeException, IOException {
 
-		OrionV2Utils.unregisterEntity(BASE_PATH, thingId);
-
 		String transformedID = filterThingID(thingId);
-
+		OrionV2Utils.unregisterEntity(BASE_PATH, transformedID);
+		
+		/*
 		try {
 			client.removeEntity(transformedID, null);
 		} catch (Exception e) {
 			throw new BridgeException(e);
 		}
+		*/
 	}
 
 	private void subscribe(String thingID, String conversationId) throws BridgeException {
@@ -526,28 +528,18 @@ public class OrionBridge extends AbstractBridge {
 				}
 
 			} else if (messageTypesEnumSet.contains(URIManagerMessageMetadata.MessageTypesEnum.QUERY)) {
-				// XXX Improve the Query definition
-
-				Set<String> entities = INTERMWDemoUtils.getEntityIDsFromPayload(message.getPayload(), INTERMWDemoUtils.EntityTypeDevice);
-				if (entities.isEmpty())
-					throw new PayloadException("No entities of type Device found in the Payload");
-
-				throw new BridgeException("QUERY not implemented");
-				/*
-				 * String entity = entities.iterator().next();
-				 * 
-				 * Query q = new DefaultQueryImpl(new ThingId(entity)); read(q);
-				 */
-
+				query(message);
 			} else if (messageTypesEnumSet.contains(URIManagerMessageMetadata.MessageTypesEnum.SUBSCRIBE)) {
 				// Assuming the subscribing to one thing
+				/*
 				Set<String> entities = INTERMWDemoUtils.getEntityIDsFromPayload(message.getPayload(), INTERMWDemoUtils.EntityTypeDevice);
 				if (entities.isEmpty())
 					throw new PayloadException("No entities of type Device found in the Payload");
 
 				String entity = entities.iterator().next();
 				subscribe(entity, message.getMetadata().getConversationId().orElse(""));
-
+				*/
+				subscribe(message);
 			} else if (messageTypesEnumSet.contains(URIManagerMessageMetadata.MessageTypesEnum.UNSUBSCRIBE)) {
 				String conversationID = message.getMetadata().getConversationId().orElse("");
 				unsubscribe(new SubscriptionId(conversationID));
@@ -613,7 +605,12 @@ public class OrionBridge extends AbstractBridge {
 		// TODO Review url and change the method's entityId
 		Set<String> entityIds = INTERMWDemoUtils.getEntityIDsFromPayload(message.getPayload(), "http://inter-iot.eu/syntax/FIWAREv2#Entity");
 		for (String entityId : entityIds) {
-			OrionV2Utils.queryEntityById(BASE_PATH, entityId);
+			try {
+				HttpResponse response = OrionV2Utils.queryEntityById(BASE_PATH, entityId);
+				logger.info(response.toString());
+			} catch (IOException e) {
+				logger.error("Error on query: " + e.getMessage());
+			}
 		}
 	}
 
