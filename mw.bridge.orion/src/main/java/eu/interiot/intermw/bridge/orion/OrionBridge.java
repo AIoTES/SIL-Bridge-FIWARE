@@ -488,8 +488,7 @@ public class OrionBridge extends AbstractBridge {
 		try {
 			if (messageTypesEnumSet.contains(URIManagerMessageMetadata.MessageTypesEnum.THING_REGISTER)) {
 				// TODO Discuss with pawel EntityTypeDevice to enum
-				Set<String> entityIds = INTERMWDemoUtils.getEntityIDsFromPayload(message.getPayload(),
-						INTERMWDemoUtils.EntityTypeDevice);
+				Set<String> entityIds = INTERMWDemoUtils.getEntityIDsFromPayload(message.getPayload(), INTERMWDemoUtils.EntityTypeDevice);
 
 				// XXX Discuss with matevz, flavio At this point we can
 				// do two things, iterate over the list and do atomic
@@ -498,6 +497,8 @@ public class OrionBridge extends AbstractBridge {
 				// in order to preserve the Bridge API TODO consider
 				// changing it
 
+				entityIds = INTERMWDemoUtils.getEntityIDsFromPayload(message.getPayload(), "http://inter-iot.eu/syntax/FIWAREv2#Entity");
+				
 				for (String entityId : entityIds) {
 					// TODO Loop over the payload to include possible
 					// observations in the creation or a schema of the
@@ -505,8 +506,7 @@ public class OrionBridge extends AbstractBridge {
 					create(entityId, message.getPayload());
 				}
 			} else if (messageTypesEnumSet.contains(URIManagerMessageMetadata.MessageTypesEnum.THING_UNREGISTER)) {
-				Set<String> entityIds = INTERMWDemoUtils.getEntityIDsFromPayload(message.getPayload(),
-						INTERMWDemoUtils.EntityTypeDevice);
+				Set<String> entityIds = INTERMWDemoUtils.getEntityIDsFromPayload(message.getPayload(), INTERMWDemoUtils.EntityTypeDevice);
 				for (String entityId : entityIds) {
 					delete(entityId);
 				}
@@ -514,8 +514,7 @@ public class OrionBridge extends AbstractBridge {
 
 				if (messageTypesEnumSet.contains(URIManagerMessageMetadata.MessageTypesEnum.OBSERVATION)) {
 
-					Set<String> entities = INTERMWDemoUtils.getEntityIDsFromPayload(message.getPayload(),
-							INTERMWDemoUtils.EntityTypeDevice);
+					Set<String> entities = INTERMWDemoUtils.getEntityIDsFromPayload(message.getPayload(), INTERMWDemoUtils.EntityTypeDevice);
 
 					if (entities.isEmpty())
 						throw new BridgeException("No entities of type Device found in the Payload");
@@ -529,8 +528,7 @@ public class OrionBridge extends AbstractBridge {
 			} else if (messageTypesEnumSet.contains(URIManagerMessageMetadata.MessageTypesEnum.QUERY)) {
 				// XXX Improve the Query definition
 
-				Set<String> entities = INTERMWDemoUtils.getEntityIDsFromPayload(message.getPayload(),
-						INTERMWDemoUtils.EntityTypeDevice);
+				Set<String> entities = INTERMWDemoUtils.getEntityIDsFromPayload(message.getPayload(), INTERMWDemoUtils.EntityTypeDevice);
 				if (entities.isEmpty())
 					throw new PayloadException("No entities of type Device found in the Payload");
 
@@ -543,8 +541,7 @@ public class OrionBridge extends AbstractBridge {
 
 			} else if (messageTypesEnumSet.contains(URIManagerMessageMetadata.MessageTypesEnum.SUBSCRIBE)) {
 				// Assuming the subscribing to one thing
-				Set<String> entities = INTERMWDemoUtils.getEntityIDsFromPayload(message.getPayload(),
-						INTERMWDemoUtils.EntityTypeDevice);
+				Set<String> entities = INTERMWDemoUtils.getEntityIDsFromPayload(message.getPayload(), INTERMWDemoUtils.EntityTypeDevice);
 				if (entities.isEmpty())
 					throw new PayloadException("No entities of type Device found in the Payload");
 

@@ -144,5 +144,22 @@ public class OrionV2Utils {
 		}
 		return response;
     }
+    
+    public static String filterThingID(String thingId) {
+		String filteredString;
+		// Check algorithm is optimal+
+		if (thingId.contains("http://inter-iot.eu/dev/")) {
+			filteredString = thingId.replace("http://inter-iot.eu/dev/", "");
+			return filteredString;
+		} else if (thingId.contains("/")) {
+			filteredString = thingId.replace("/", "%");
+			return filteredString;
+		} else if (thingId.contains("#")) {
+			filteredString = thingId.replace("#", "+");
+			return filteredString;
+		} else {
+			return thingId;
+		}
+	}
 	
 }

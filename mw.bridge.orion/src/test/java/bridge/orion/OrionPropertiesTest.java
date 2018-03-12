@@ -55,22 +55,24 @@ public class OrionPropertiesTest {
 			Platform platform = new Platform(platformId.toString(), platformRegisterMsg.getPayload());
 			
 			URL url2 = Resources.getResource("messages/thing-register-FIWARE.json");
-			String thingRegisterJson2 = Resources.toString(url2, Charsets.UTF_8);
-			System.out.println(thingRegisterJson2);
-			Message platformRegisterMsg2 = new Message(thingRegisterJson2);
+			String thingRegisterJson = Resources.toString(url2, Charsets.UTF_8);
+			System.out.println(thingRegisterJson);
+			Message thingRegisterMsg = new Message(thingRegisterJson);
 			
 			orionBridge = new OrionBridge(configuration, platform);
 
 			String basepath = configuration.getProperty("orion-base-path");
 			assertNotNull(basepath);
 
-			FIWAREv2Translator translator = new FIWAREv2Translator();			
-			String body = translator.toFormatX(platformRegisterMsg2.getPayload().getJenaModel());
+			orionBridge.send(thingRegisterMsg);
+			//FIWAREv2Translator translator = new FIWAREv2Translator();			
+			//String body = translator.toFormatX(thingRegisterMsg.getPayload().getJenaModel());
 			
 			//String body = "{body}";
-			assertNotNull(body);
+			//assertNotNull(body);
 
-			OrionV2Utils.createSubscription(basepath, body);
+			//OrionV2Utils.registerEntity(basepath, body);
+			//OrionV2Utils.createSubscription(basepath, body);
 			
 			/*
 			 * // register platform orionBridge.send(platformRegisterMsg); Message
@@ -80,7 +82,7 @@ public class OrionPropertiesTest {
 			 * assertTrue(messageTypesEnumSet.contains(MessageTypesEnum.PLATFORM_REGISTER));
 			 */
 			
-		} catch (MiddlewareException | IOException | MessageException | IllegalSyntaxException e) {
+		} catch (MiddlewareException | IOException | MessageException e){
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
