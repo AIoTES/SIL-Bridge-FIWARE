@@ -557,9 +557,14 @@ public class OrionBridge extends AbstractBridge {
 	}
 
 	@Override
-	public void registerPlatform(Message arg0) {
+	public void registerPlatform(Message message) {
 		// TODO Auto-generated method stub
 
+	}
+	
+	@Override
+	public void unregisterPlatform(Message message) {
+		// TODO Auto-generated method stub
 	}
 
 	@Override
@@ -655,11 +660,6 @@ public class OrionBridge extends AbstractBridge {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
-	}
-
-	@Override
-	public void unregisterPlatform(Message message) {
-
 	}
 
 	@Override
