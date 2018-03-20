@@ -461,7 +461,7 @@ public class OrionBridge extends AbstractBridge {
 	}
 
 	@SuppressWarnings("StatementWithEmptyBody")
-	@Override
+	
 	public void send(Message message) throws BridgeException {
 		Set<URIManagerMessageMetadata.MessageTypesEnum> messageTypesEnumSet = message.getMetadata().getMessageTypes();
 		try {
@@ -518,7 +518,7 @@ public class OrionBridge extends AbstractBridge {
 
 	}
 
-	@Override
+	
 	public void discover(Message message) {
 		try {
 			// get the body from the http response. HttpResponse comes from the http request
@@ -542,7 +542,7 @@ public class OrionBridge extends AbstractBridge {
 		}
 	}
 
-	@Override
+	
 	public void query(Message message) {
 		// TODO Review url and change the method's entityId
 		Set<String> entityIds = INTERMWDemoUtils.getEntityIDsFromPayload(message.getPayload(), "http://inter-iot.eu/syntax/FIWAREv2#Entity");
@@ -556,18 +556,18 @@ public class OrionBridge extends AbstractBridge {
 		}
 	}
 
-	@Override
+	
 	public void registerPlatform(Message message) {
 		// TODO Auto-generated method stub
 
 	}
 	
-	@Override
+	
 	public void unregisterPlatform(Message message) {
 		// TODO Auto-generated method stub
 	}
 
-	@Override
+	
 	public void registerThing(Message message) {
 		try {
 			// TODO Discuss with pawel EntityTypeDevice to enum
@@ -594,7 +594,7 @@ public class OrionBridge extends AbstractBridge {
 		}
 	}
 	
-	@Override
+	
 	public void updateThing(Message message) {
 		try{
 			// TODO Discuss with pawel EntityTypeDevice to enum
@@ -610,7 +610,7 @@ public class OrionBridge extends AbstractBridge {
 		}
 	}
 	
-	@Override
+	
 	public void unregisterThing(Message message) {
 		// Get the entity id to which be subscribed
 		// (to be retrieved from the message)
@@ -632,11 +632,11 @@ public class OrionBridge extends AbstractBridge {
 
 	}
 
-	@Override
+	
 	public void subscribe(Message message) {
 		FIWAREv2Translator translator = new FIWAREv2Translator();
 		String responseBody = null;
-		Message responseMessage = null;
+		Message responseMessage = createResponseMessage(message);
 		try {
 			//Get the entityIds from the payload. Will be ready in Messages v0.7
 			ArrayList<String> myFalseEntityList = new ArrayList<>();
@@ -662,7 +662,7 @@ public class OrionBridge extends AbstractBridge {
 		}
 	}
 
-	@Override
+	
 	public void unsubscribe(Message message) {
 		// TODO Auto-generated method stub
 		try{
