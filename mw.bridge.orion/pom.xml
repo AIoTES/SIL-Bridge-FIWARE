@@ -11,6 +11,10 @@
         <artifactId>mw.bridge.orion.parent</artifactId>
         <version>0.0.1-SNAPSHOT</version>
     </parent>
+    
+    <properties>
+        <intermw.version>2.0.0-SNAPSHOT</intermw.version>
+    </properties>
 
     <dependencies>
         <dependency>

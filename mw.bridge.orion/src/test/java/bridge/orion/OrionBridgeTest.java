@@ -9,20 +9,20 @@ import org.junit.Test;
 
 import com.google.common.base.Charsets;
 import com.google.common.io.Resources;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
 
-import eu.interiot.intermw.bridge.orion.OrionV2Utils;
 import eu.interiot.intermw.bridge.orion.OrionBridge;
 import eu.interiot.intermw.commons.DefaultConfiguration;
 import eu.interiot.intermw.commons.exceptions.MiddlewareException;
 import eu.interiot.intermw.commons.interfaces.Configuration;
 import eu.interiot.intermw.commons.model.Platform;
-import eu.interiot.message.EntityID;
 import eu.interiot.message.Message;
+import eu.interiot.message.ID.EntityID;
 import eu.interiot.message.exceptions.MessageException;
-import eu.interiot.translators.syntax.IllegalSyntaxException;
-import eu.interiot.translators.syntax.FIWARE.FIWAREv2Translator;
 
-public class OrionPropertiesTest {
+public class OrionBridgeTest {
 
 	Configuration configuration;
 	Platform platform;
@@ -36,7 +36,7 @@ public class OrionPropertiesTest {
 	 * }
 	 */
 
-	@Test
+	//@Test
 	public void tests() {
 
 		Configuration configuration;
@@ -99,6 +99,53 @@ public class OrionPropertiesTest {
 			e.printStackTrace();
 		}
 
+	}
+	
+	@Test
+	public void TestBuildUrl(){
+		String body = "{\r\n" + 
+				"  \"description\": \"A subscription to get info about Room1\",\r\n" + 
+				"  \"subject\": {\r\n" + 
+				"    \"entities\": [\r\n" + 
+				"      {\r\n" + 
+				"        \"id\": \"Room1\",\r\n" + 
+				"        \"type\": \"Room\"\r\n" + 
+				"      }\r\n" + 
+				"    ],\r\n" + 
+				"    \"condition\": {\r\n" + 
+				"      \"attrs\": [\r\n" + 
+				"        \"pressure\"\r\n" + 
+				"      ]\r\n" + 
+				"    }\r\n" + 
+				"  },\r\n" + 
+				"  \"notification\": {\r\n" + 
+				"    \"http\": {\r\n" + 
+				"      \"url\": \"http://localhost:1028/accumulate\"\r\n" + 
+				"    },\r\n" + 
+				"    \"attrs\": [\r\n" + 
+				"      \"temperature\"\r\n" + 
+				"    ]\r\n" + 
+				"  },\r\n" + 
+				"  \"expires\": \"2040-01-01T14:00:00.00Z\",\r\n" + 
+				"  \"throttling\": 5\r\n" + 
+				"}";
+		String url = "http://localhost14antesdelpunto:4569";
+		
+		JsonParser parser = new JsonParser();
+    	JsonElement jsonBody = parser.parse(body);
+    	if(jsonBody.isJsonObject()){
+    		if(jsonBody.isJsonObject()){
+    		    JsonObject jsonBodyObject = jsonBody.getAsJsonObject();    		    
+    		    JsonObject jsonNotification = jsonBodyObject.getAsJsonObject("notification");
+    		    if(jsonNotification.isJsonObject()){
+    		    	JsonObject jsonHttp = jsonNotification.getAsJsonObject("http");
+    		    	if(jsonHttp.isJsonObject()){
+    		    		jsonHttp.addProperty("url", url);    		    		
+        		    }
+    		    }
+    		}
+    		System.out.println(jsonBody.toString());
+    	}
 	}
 
 }

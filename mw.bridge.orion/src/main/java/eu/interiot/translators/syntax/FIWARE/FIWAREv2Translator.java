@@ -84,9 +84,11 @@ public class FIWAREv2Translator extends SyntacticTranslator<String> {
     private Property hasElement;
     private Property hasNumber;
     private Resource valueType;
+    
+    public static String FIWAREbaseURI = "http://inter-iot.eu/syntax/FIWAREv2#";
 
     public FIWAREv2Translator() {
-        super("http://inter-iot.eu/syntax/FIWAREv2#", "NGSIv2");
+        super(FIWAREbaseURI, "NGSIv2");
 
         setIdURI(getBaseURI() + "hasId");
         setTypeURI(getBaseURI() + "hasType");

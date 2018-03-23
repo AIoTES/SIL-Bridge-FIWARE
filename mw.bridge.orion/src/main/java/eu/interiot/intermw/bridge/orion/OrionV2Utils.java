@@ -1,21 +1,35 @@
 package eu.interiot.intermw.bridge.orion;
 
 import java.io.IOException;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.methods.HttpDelete;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpPost;
+import org.apache.http.client.methods.HttpPut;
 import org.apache.http.entity.ContentType;
 import org.apache.http.entity.StringEntity;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClientBuilder;
+import org.apache.jena.rdf.model.Model;
+import org.apache.jena.rdf.model.SimpleSelector;
+import org.apache.jena.vocabulary.RDF;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.google.gson.JsonArray;
+import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
+
+import eu.interiot.intermw.commons.model.Platform;
+import eu.interiot.message.Message;
+import eu.interiot.message.MessagePayload;
+import eu.interiot.message.ID.EntityID;
+import eu.interiot.translators.syntax.FIWARE.FIWAREv2Translator;
 
 public class OrionV2Utils {
 
@@ -32,16 +46,22 @@ public class OrionV2Utils {
     private static final String FIWARE_ENTITY_REGISTER= "/v2/entities";
     //delete {entityId}
     private static final String FIWARE_ENTITY_UNREGISTER = "/v2/entities";
+    //put
+    private static final String FIWARE_ENTITY_UPDATE = "/v2/entities";
+    //get
+    private static final String FIWARE_ENTITY_DISCOVERY = "/v2/entities";    
     //post {entityId}
     private static final String FIWARE_ENTITY_OBSERVATION = "/v2/entities";
-    //get
-    private static final String FIWARE_ENTITY_DISCOVERY = "/v2/entities";
+    
     //get {entityId}
     private static final String FIWARE_ENTITY_QUERY = "/v2/op/query";
     //post
     private static final String FIWARE_ENTITY_SUBSCRIBE = "/v2/subscriptions";
     //remove {subscriptionId}
     private static final String FIWARE_ENTITY_UNSUBSCRIBE = "/v2/subscriptions/";
+    
+    // Types
+    public static final String EntityTypeDevice = FIWAREv2Translator.FIWAREbaseURI + "Entity";
        	
 	public static HttpResponse registerEntity(String baseUrl, String body) throws IOException {
 		String completeUrl = baseUrl + FIWARE_ENTITY_REGISTER;
@@ -51,6 +71,11 @@ public class OrionV2Utils {
 	public static HttpResponse unregisterEntity(String baseUrl, String entityId) throws IOException {
 		String completeUrl = baseUrl + FIWARE_ENTITY_UNREGISTER+"/"+entityId;
 		return deteleInFiware(completeUrl); 
+	}
+	
+	public static HttpResponse updateEntity(String baseUrl, String entityId, String body) throws IOException {
+		String completeUrl = baseUrl + FIWARE_ENTITY_UPDATE + "/" + entityId + "/attrs" ;
+		return putToFiware(completeUrl, body); 
 	}
 	
 	public static HttpResponse publishEntityObservation(String baseUrl, String entityId ,String body) throws IOException {
@@ -105,7 +130,6 @@ public class OrionV2Utils {
 		
         logger.debug("Received response from the platform: {}", response.getStatusLine());
 		return response;
-
 	}
     
     private static HttpResponse getFromFiware(String url) throws IOException{
@@ -127,7 +151,28 @@ public class OrionV2Utils {
 		
         logger.debug("Received response from the platform: {}", response.getStatusLine());
 		return response;
-
+	}
+    
+    private static HttpResponse putToFiware(String url, String body) throws IOException{
+		
+		httpClient = HttpClientBuilder.create().build();
+        HttpPut httpPut = new HttpPut(url); 
+        HttpEntity httpEntity = new StringEntity(body, ContentType.APPLICATION_JSON);
+        httpPut.setEntity(httpEntity);
+        HttpResponse response = null;
+		try {
+			response = httpClient.execute(httpPut);
+			System.out.println(response.toString());
+		} catch (IOException e) {
+			e.printStackTrace();
+		}finally {
+			if(httpClient!=null) {
+				httpClient.close();
+			}
+		}
+		
+        logger.debug("Received response from the platform: {}", response.getStatusLine());
+		return response;
 	}
     
     private static HttpResponse deteleInFiware(String url) throws IOException{
@@ -178,4 +223,40 @@ public class OrionV2Utils {
     	
     	return jsonObjectFinal.toString();
     }
+    
+    public static String buildJsonWithUrl(String body, String url){
+    	JsonParser parser = new JsonParser();
+    	JsonElement jsonBody = parser.parse(body);
+    	if(jsonBody.isJsonObject()){
+    		if(jsonBody.isJsonObject()){
+    		    JsonObject jsonBodyObject = jsonBody.getAsJsonObject();    		    
+    		    JsonObject jsonNotification = jsonBodyObject.getAsJsonObject("notification");
+    		    if(jsonNotification.isJsonObject()){
+    		    	JsonObject jsonHttp = jsonNotification.getAsJsonObject("http");
+    		    	if(jsonHttp.isJsonObject()){
+    		    		jsonHttp.addProperty("url", url);    		    		
+        		    }
+    		    }
+    		}    		
+    	}
+    	return jsonBody.toString();	
+    }
+    
+    public static String getPlatformId(Platform platform){
+		return platform.getId().getId();
+	}
+    
+    public static Set<String> getEntityIDsFromPayload(MessagePayload payload, String entityType) {
+        Model model = payload.getJenaModel();
+        return model.listStatements(new SimpleSelector(null, RDF.type, model.createResource(entityType))).toSet().stream().map(x -> x.getSubject().toString()).collect(Collectors.toSet());
+    }
+    
+    public static Set<EntityID> getEntityIDsFromPayloadAsEntityIDSet(MessagePayload payload, String entityType) {
+        Model model = payload.getJenaModel();
+        return model.listStatements(new SimpleSelector(null, RDF.type, model.createResource(entityType))).toSet().stream().map(x -> new EntityID(x.getSubject().toString())).collect(Collectors.toSet());
+    }
+    
+    public static Set<String> getEntityIds(Message message){
+		return getEntityIDsFromPayload(message.getPayload(), EntityTypeDevice);
+	}
 }
