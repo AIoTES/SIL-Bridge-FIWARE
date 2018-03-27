@@ -66,7 +66,7 @@ public class OrionApiClient extends org.interiot.fiware.ngsiv2.client.ApiClient 
 	private static final String USER_AGENT = "interiot/1.0.0/java";
 	private static final boolean DEBUGGING = false;
 
-	public  static final String PROP_URL = "url";
+	public static final String PROP_URL = "url";
 	public static final String PROP_DATE_TIME_FORMAT = "datetimeformat";
 	public static final String PROP_DATE_FORMAT = "dateformat";
 	public static final String PROP_USER_AGENT = "useragent";

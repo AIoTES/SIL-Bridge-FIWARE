@@ -7,6 +7,8 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fasterxml.jackson.databind.node.ValueNode;
+
+import eu.interiot.intermw.bridge.orion.OrionV2Utils;
 import eu.interiot.translators.syntax.IllegalSyntaxException;
 import eu.interiot.translators.syntax.SyntacticTranslator;
 import org.apache.jena.datatypes.RDFDatatype;
@@ -82,9 +84,11 @@ public class FIWAREv2Translator extends SyntacticTranslator<String> {
     private Property hasElement;
     private Property hasNumber;
     private Resource valueType;
+    
+    public static String FIWAREbaseURI = "http://inter-iot.eu/syntax/FIWAREv2#";
 
     public FIWAREv2Translator() {
-        super("http://inter-iot.eu/syntax/FIWAREv2#", "NGSIv2");
+        super(FIWAREbaseURI, "NGSIv2");
 
         setIdURI(getBaseURI() + "hasId");
         setTypeURI(getBaseURI() + "hasType");
@@ -375,7 +379,8 @@ public class FIWAREv2Translator extends SyntacticTranslator<String> {
         //Parse id
         NodeIterator nodeIterator = jenaModel.listObjectsOfProperty(entityResource, hasId);
         if (nodeIterator.hasNext()) {
-            entity.put("id", nodeIterator.next().toString());
+            String strFilteredId = OrionV2Utils.filterThingID(nodeIterator.next().toString());
+        	entity.put("id", strFilteredId);
         }
 
         //Parse type
