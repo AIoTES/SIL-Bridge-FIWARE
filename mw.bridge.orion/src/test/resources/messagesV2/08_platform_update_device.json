@@ -1,0 +1,10 @@
+{
+  "temperature": {
+    "value": 26.5,
+    "type": "Float"
+  },
+  "pressure": {
+    "value": 763,
+    "type": "Float"
+  }
+}

@@ -14,6 +14,7 @@ import org.apache.http.entity.ContentType;
 import org.apache.http.entity.StringEntity;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClientBuilder;
+import org.apache.http.util.EntityUtils;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.SimpleSelector;
 import org.apache.jena.vocabulary.RDF;
@@ -27,14 +28,16 @@ import com.google.gson.JsonParser;
 
 import eu.interiot.intermw.commons.model.Platform;
 import eu.interiot.message.Message;
+import eu.interiot.message.MessageMetadata;
 import eu.interiot.message.MessagePayload;
 import eu.interiot.message.ID.EntityID;
+import eu.interiot.message.managers.URI.URIManagerMessageMetadata.MessageTypesEnum;
+import eu.interiot.message.metadata.PlatformMessageMetadata;
 import eu.interiot.translators.syntax.FIWARE.FIWAREv2Translator;
 
 public class OrionV2Utils {
-
-	private static CloseableHttpClient httpClient;
 	String url;
+	private static CloseableHttpClient httpClient;
     private final static Logger logger = LoggerFactory.getLogger(OrionV2Utils.class);
 
     //Unsupported
@@ -80,10 +83,10 @@ public class OrionV2Utils {
 	
 	public static HttpResponse publishEntityObservation(String baseUrl, String entityId ,String body) throws IOException {
 		String completeUrl = baseUrl + FIWARE_ENTITY_OBSERVATION+"/"+entityId;
-		return deteleInFiware(completeUrl); 
+		return putToFiware(completeUrl,body);
 	}
 	
-	public static HttpResponse discoverEntities(String baseUrl) throws IOException {
+	public static String discoverEntities(String baseUrl) throws IOException {
 		String completeUrl = baseUrl + FIWARE_ENTITY_DISCOVERY;
 		return getFromFiware(completeUrl); 
 	}
@@ -96,7 +99,6 @@ public class OrionV2Utils {
 		return postToFiware(completeUrl, body); 
 	}
     
-	
 	public static HttpResponse createSubscription(String baseUrl, String body) throws IOException {
 		String completeUrl = baseUrl + FIWARE_ENTITY_SUBSCRIBE;
 		return postToFiware(completeUrl, body); 
@@ -106,8 +108,6 @@ public class OrionV2Utils {
 		String completeUrl = baseUrl + FIWARE_ENTITY_UNSUBSCRIBE+"/"+subscriptionId;
 		return deteleInFiware(completeUrl); 
 	}
-	
-	
 	
     private static HttpResponse postToFiware(String url, String body) throws IOException{
     		
@@ -128,20 +128,19 @@ public class OrionV2Utils {
 			}
 		}
 		
-        logger.debug("Received response from the platform: {}", response.getStatusLine());
+        logger.info("Received response from the platform: {}", response.getStatusLine());
 		return response;
 	}
     
-    private static HttpResponse getFromFiware(String url) throws IOException{
-		
+    private static String getFromFiware(String url) throws IOException{
 		httpClient = HttpClientBuilder.create().build();
         HttpGet httpGet = new HttpGet(url);        
         HttpResponse response = null;
+        String responseBody="";
 		try {
 			response = httpClient.execute(httpGet);
-			System.out.println(response.toString());
+			responseBody=EntityUtils.toString(response.getEntity());
 		} catch (IOException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}finally {
 			if(httpClient!=null) {
@@ -149,12 +148,12 @@ public class OrionV2Utils {
 			}
 		}
 		
-        logger.debug("Received response from the platform: {}", response.getStatusLine());
-		return response;
+        logger.info("Received response from the platform: {}", response.getStatusLine());
+        
+		return responseBody;
 	}
     
     private static HttpResponse putToFiware(String url, String body) throws IOException{
-		
 		httpClient = HttpClientBuilder.create().build();
         HttpPut httpPut = new HttpPut(url); 
         HttpEntity httpEntity = new StringEntity(body, ContentType.APPLICATION_JSON);
@@ -171,12 +170,11 @@ public class OrionV2Utils {
 			}
 		}
 		
-        logger.debug("Received response from the platform: {}", response.getStatusLine());
+        logger.info("Received response from the platform: {}", response.getStatusLine());
 		return response;
 	}
     
     private static HttpResponse deteleInFiware(String url) throws IOException{
-    	
     	httpClient = HttpClientBuilder.create().build();
     	HttpDelete httpDelete = new HttpDelete(url);
     	HttpResponse response = null;
@@ -259,4 +257,49 @@ public class OrionV2Utils {
     public static Set<String> getEntityIds(Message message){
 		return getEntityIDsFromPayload(message.getPayload(), EntityTypeDevice);
 	}
+    
+    /**
+     * Generate metadata for a test message device
+     * @param messageResponse
+     * @param messageTypesEnum
+     */
+    public static void generateDeviceMetadataToMessageResponse(Message messageResponse, MessageTypesEnum messageTypesEnum) {
+    	MessageMetadata metadata = new MessageMetadata();
+    	
+		metadata.initializeMetadata();
+        metadata.setMessageType(messageTypesEnum);
+        messageResponse.setMetadata(metadata);
+    }
+    
+    /**
+     * Generate metadata for a test message platform
+     * @param messageResponsePlatform
+     * @param platform
+     */
+    public static void generatePlatformMetadaToMessageResponse(Message messageResponsePlatform, MessageTypesEnum messageTypesEnum, String platform) {
+    	PlatformMessageMetadata metadataPlatform = new MessageMetadata().asPlatformMessageMetadata();
+    	
+        metadataPlatform.initializeMetadata();
+        metadataPlatform.setMessageType(messageTypesEnum);
+        metadataPlatform.addReceivingPlatformID(new EntityID(platform));
+        messageResponsePlatform.setMetadata(metadataPlatform);
+    }
+    
+    /**
+     * 
+     * @param messageResponse
+     * @param BASE_PATH
+     * @throws UnsupportedOperationException
+     * @throws IOException
+     */
+    public static void generatePayloadToMessageResponse(Message messageResponse, String BASE_PATH) throws UnsupportedOperationException, IOException {
+    	String responseBody = OrionV2Utils.discoverEntities(BASE_PATH);
+		FIWAREv2Translator translator = new FIWAREv2Translator();
+		// Create the model from the response JSON
+		Model translatedModel = translator.toJenaModel(responseBody);
+		// Create a new message payload for the response message
+		MessagePayload responsePayload = new MessagePayload(translatedModel);
+		// Attach the payload to the message
+		messageResponse.setPayload(responsePayload);
+    }
 }
