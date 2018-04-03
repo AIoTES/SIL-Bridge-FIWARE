@@ -1,57 +1,57 @@
 {
-  "@graph": [
-    {
-      "@graph": [
-        {
-          "@id": "InterIoTMsg:meta/70b5d0fc-699f-4915-9176-5960ed1d9b95",
-          "@type": [
-            "InterIoTMsg:Thing_register",
-            "InterIoTMsg:meta"
-          ],
-          "InterIoTMsg:ReceiverPlatformId": {
-            "@id": "InterIoT:example-platform1"
-          },
-          "InterIoTMsg:conversationID": "conv1b30d712-c687-459a-88ee-21dbbeeb4266",
-          "InterIoTMsg:dateTimeStamp": "2018-01-15T21:48:55.192+01:00",
-          "InterIoTMsg:messageID": "msg936c3d51-3e55-4fa2-b816-dfcf108b562e",
-          "InterIoTMsg:status": "myclient"
-        }
-      ],
-      "@id": "InterIoTMsg:metadata"
-    },
-    {
-      "@graph": [
-        {
-          "@id": "_:b0",
-          "@type": "InterIoT:syntax/FIWAREv2#Attribute",
-          "InterIoT:syntax/FIWAREv2#hasName": "name",
-          "InterIoT:syntax/FIWAREv2#hasValue": {
-            "@id": "_:b1"
-          }
-        },
-        {
-          "@id": "_:b1",
-          "InterIoT:syntax/FIWAREv2#hasAttrValue": "Device 2",
-          "InterIoT:syntax/FIWAREv2#hasType": "String"
-        },
-        {
-          "@id": "http://www.example.com/example-sensor",
-          "@type": "InterIoT:syntax/FIWAREv2#Entity",
-          "InterIoT:syntax/FIWAREv2#hasAttribute": {
-            "@id": "_:b0"
-          },
-          "InterIoT:syntax/FIWAREv2#hasId": "http://www.example.com/example-sensor",
-          "InterIoT:syntax/FIWAREv2#hasType": "Device",
-          "http://www.w3.org/ns/sosa/isHostedBy": {
-            "@id": "InterIoT:example-platform1"
-          }
-        }
-      ],
-      "@id": "InterIoTMsg:payload"
-    }
-  ],
-  "@context": {
-    "InterIoTMsg": "http://inter-iot.eu/message/",
-    "InterIoT": "http://inter-iot.eu/"
-  }
+	"@graph": [
+		{
+			"@graph": [
+				{
+					"@id": "InterIoTMsg:meta/70b5d0fc-699f-4915-9176-5960ed1d9b95",
+					"@type": [
+						"InterIoTMsg:Thing_register",
+						"InterIoTMsg:meta"
+					],
+					"InterIoTMsg:ReceiverPlatformId": {
+						"@id": "InterIoT:example-platform1"
+					},
+					"InterIoTMsg:conversationID": "conv1b30d712-c687-459a-88ee-21dbbeeb4266",
+					"InterIoTMsg:dateTimeStamp": "2018-01-15T21:48:55.192+01:00",
+					"InterIoTMsg:messageID": "msg936c3d51-3e55-4fa2-b816-dfcf108b562e",
+					"InterIoTMsg:status": "myclient"
+				}
+			],
+			"@id": "InterIoTMsg:metadata"
+		},
+		{
+			"@graph": [
+				{
+					"@id": "_:b0",
+					"@type": "InterIoT:syntax/FIWAREv2#Attribute",
+					"InterIoT:syntax/FIWAREv2#hasName": "name",
+					"InterIoT:syntax/FIWAREv2#hasValue": {
+						"@id": "_:b1"
+					}
+				},
+				{
+					"@id": "_:b1",
+					"InterIoT:syntax/FIWAREv2#hasAttrValue": "Device 2",
+					"InterIoT:syntax/FIWAREv2#hasType": "String"
+				},
+				{
+					"@id": "http://www.example.com/example-sensor",
+					"@type": "InterIoT:syntax/FIWAREv2#Entity",
+					"InterIoT:syntax/FIWAREv2#hasAttribute": {
+						"@id": "_:b0"
+					},
+					"InterIoT:syntax/FIWAREv2#hasId": "http://www.example.com/example-sensor",
+					"InterIoT:syntax/FIWAREv2#hasType": "Device",
+					"http://www.w3.org/ns/sosa/isHostedBy": {
+						"@id": "InterIoT:example-platform1"
+					}
+				}
+			],
+			"@id": "InterIoTMsg:payload"
+		}
+	],
+	"@context": {
+		"InterIoTMsg": "http://inter-iot.eu/message/",
+		"InterIoT": "http://inter-iot.eu/"
+	}
 }

@@ -1,5 +1,5 @@
 {
-  "id": "Room1",
+  "id": "http://Room1",
   "temperature": {
     "value": 28,
     "type": "Float"

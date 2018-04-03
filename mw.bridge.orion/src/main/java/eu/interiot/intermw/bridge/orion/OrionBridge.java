@@ -30,7 +30,6 @@ import eu.interiot.intermw.commons.interfaces.Configuration;
 import eu.interiot.intermw.commons.model.Platform;
 import eu.interiot.message.Message;
 import eu.interiot.message.MessagePayload;
-import eu.interiot.message.ID.EntityID;
 import eu.interiot.message.managers.URI.URIManagerMessageMetadata.MessageTypesEnum;
 import eu.interiot.message.utils.MessageUtils;
 import eu.interiot.translators.syntax.FIWARE.FIWAREv2Translator;
@@ -140,19 +139,19 @@ public class OrionBridge extends AbstractBridge {
 		Message responseMessage = MessageUtils.createResponseMessage(message);
 		logger.info("Updating devices...");
 		Set<String> deviceIds = OrionV2Utils.getEntityIds(message);
-		Set<EntityID> deviceIdsAsEntities = OrionV2Utils.getEntityIdsAsEntityIDSet(message);
 		for(String deviceId : deviceIds){
 			try {
 				FIWAREv2Translator translator = new FIWAREv2Translator();
 				String body = translator.toFormatX(message.getPayload().getJenaModel());
-				String responseBody = OrionV2Utils.updateEntity(BASE_PATH, deviceId, body);
+				String transformedId = OrionV2Utils.filterThingID(deviceId);
+				String responseBody = OrionV2Utils.updateEntity(BASE_PATH, transformedId, body);
 				// Get the Model from the response
 				Model translatedModel = translator.toJenaModel(responseBody);			
 				// Create a new message payload for the response message
 				MessagePayload responsePayload = new MessagePayload(translatedModel);
 				// Attach the payload to the message
 				responseMessage.setPayload(responsePayload);
-				logger.info("Device {} has been updated.", deviceId);
+				logger.info("Device {} has been updated.", transformedId);
 			} 
 			catch (Exception e) {
 				logger.error("Error updating device {}: " + e.getMessage(), deviceId);

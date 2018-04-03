@@ -54,7 +54,8 @@ public class ConstructMessagesTest {
 		//mapJsons.put(MessageTypesEnum.UNSUBSCRIBE, "messagesV2/03_unsusbcribe.json");
 		//mapJsons.put(MessageTypesEnum.PLATFORM_CREATE_DEVICE, "messagesV2/06_platform_create_device.json");
 		//mapJsons.put(MessageTypesEnum.PLATFORM_CREATE_DEVICE, "messagesV2/06_platform_create_device2.json");
-		mapJsons.put(MessageTypesEnum.PLATFORM_UPDATE_DEVICE, "messagesV2/08_platform_update_device.json");
+		//mapJsons.put(MessageTypesEnum.PLATFORM_UPDATE_DEVICE, "messagesV2/08_platform_update_device.json");
+		mapJsons.put(MessageTypesEnum.PLATFORM_UPDATE_DEVICE, "messagesV2/08_platform_update_device2.json");
 		//mapJsons.put(MessageTypesEnum.LIST_DEVICES, "messagesV2/05_list_devices.json");
 //		mapJsons.put(MessageTypesEnum.QUERY, "messagesV2/04_query.json");
 //		mapJsons.put(MessageTypesEnum.PLATFORM_DELETE_DEVICE, "messagesV2/07_platform_delete_device.json");
@@ -67,24 +68,38 @@ public class ConstructMessagesTest {
 		    Message messageResponsePlatform = new Message();
 		    URL url = Resources.getResource(entry.getValue());
 		    
-		    //Generate Metadata for MessageResponse
-		    OrionV2Utils.generatePlatformMetadaToMessageResponse(messageResponsePlatform, entry.getKey(), platformId);
-			
-			try {
-				//Generate Payload for MessageResponse
-				generatePayloadToMessageResponse(messageResponsePlatform, BASE_PATH,Resources.toString(url, Charsets.UTF_8));
-				System.out.println("---- Printing "+entry.getValue()+" ----");
-				System.out.println(messageResponsePlatform.serializeToJSONLD());
-			} catch (UnsupportedOperationException | IOException e) {
+		    try{
+			    if(!Resources.toString(url, Charsets.UTF_8).contains("@graph")){
+			    	//Generate Metadata for MessageResponse
+				    OrionV2Utils.generatePlatformMetadaToMessageResponse(messageResponsePlatform, entry.getKey(), platformId);
+					
+					try {
+						//Generate Payload for MessageResponse
+						generatePayloadToMessageResponse(messageResponsePlatform, BASE_PATH,Resources.toString(url, Charsets.UTF_8));
+						System.out.println("---- Printing "+entry.getValue()+" ----");
+						System.out.println(messageResponsePlatform.serializeToJSONLD());
+					} catch (UnsupportedOperationException | IOException e) {
+						e.printStackTrace();
+					}
+					
+					try {
+						//Test the message generated
+						orionBridge.send(messageResponsePlatform);
+					} catch (BridgeException e) {
+						e.printStackTrace();
+					}
+			    }
+			    // It is already a JSON-LD FIWARE message
+			    else{
+			    	String platformJson = Resources.toString(url, Charsets.UTF_8);
+					System.out.println(platformJson);
+					Message platformMsg = new Message(platformJson);
+					orionBridge.send(platformMsg);
+			    }
+		    }
+		    catch (Exception e) {
 				e.printStackTrace();
-			}
-			
-			try {
-				//Test the message generated
-				orionBridge.send(messageResponsePlatform);
-			} catch (BridgeException e) {
-				e.printStackTrace();
-			}
+			}		    
 		});
 	}
 	

@@ -198,14 +198,17 @@ public class OrionV2Utils {
     public static String filterThingID(String thingId) {
     	String filteredString = thingId;
 		// Check algorithm is optimal+
-		if (thingId.contains("http://inter-iot.eu/dev/")) {
+		if (filteredString.contains("http://inter-iot.eu/dev/")) {
 			filteredString = thingId.replace("http://inter-iot.eu/dev/", "");
 		} 
-		if (thingId.contains("/")) {
-			filteredString = thingId.replace("/", "-");
+		if (filteredString.contains("/")) {
+			filteredString = filteredString.replace("/", "-");
 		}
-		if (thingId.contains("#")) {
-			filteredString = thingId.replace("#", "+");
+		if (filteredString.contains("#")) {
+			filteredString = filteredString.replace("#", "+");
+		}
+		if (filteredString.contains(":")) {
+			filteredString = filteredString.replace(":", "");
 		}
 		return filteredString;
 	}
