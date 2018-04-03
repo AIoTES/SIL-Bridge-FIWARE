@@ -20,8 +20,6 @@ package eu.interiot.intermw.bridge.orion;
 
 import java.util.Set;
 
-import org.apache.http.HttpResponse;
-import org.apache.http.util.EntityUtils;
 import org.apache.jena.rdf.model.Model;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -32,6 +30,7 @@ import eu.interiot.intermw.commons.interfaces.Configuration;
 import eu.interiot.intermw.commons.model.Platform;
 import eu.interiot.message.Message;
 import eu.interiot.message.MessagePayload;
+import eu.interiot.message.ID.EntityID;
 import eu.interiot.message.managers.URI.URIManagerMessageMetadata.MessageTypesEnum;
 import eu.interiot.message.utils.MessageUtils;
 import eu.interiot.translators.syntax.FIWARE.FIWAREv2Translator;
@@ -83,10 +82,16 @@ public class OrionBridge extends AbstractBridge {
 		Message responseMessage = MessageUtils.createResponseMessage(message);
 		try {
 			logger.info("Creating devices...");
-			FIWAREv2Translator fiwareTranslator = new FIWAREv2Translator();
-			String body = fiwareTranslator.toFormatX(message.getPayload().getJenaModel());
-			OrionV2Utils.registerEntity(BASE_PATH, body);			
+			FIWAREv2Translator translator = new FIWAREv2Translator();
+			String body = translator.toFormatX(message.getPayload().getJenaModel());
+			String responseBody = OrionV2Utils.registerEntity(BASE_PATH, body);			
 			logger.info("Device/s {} has/have been created.", OrionV2Utils.getEntityIds(message));
+			// Get the Model from the response
+			Model translatedModel = translator.toJenaModel(responseBody);			
+			// Create a new message payload for the response message
+			MessagePayload responsePayload = new MessagePayload(translatedModel);
+			// Attach the payload to the message
+			responseMessage.setPayload(responsePayload);
 			responseMessage.getMetadata().setStatus("OK");
 		} 
 		catch (Exception e) {
@@ -106,7 +111,14 @@ public class OrionBridge extends AbstractBridge {
 			Set<String> deviceIds = OrionV2Utils.getEntityIds(message);
 			for(String deviceId : deviceIds){
 				String transformedId = OrionV2Utils.filterThingID(deviceId);
-				OrionV2Utils.unregisterEntity(BASE_PATH, transformedId);
+				String responseBody = OrionV2Utils.unregisterEntity(BASE_PATH, transformedId);
+				// Get the Model from the response
+				FIWAREv2Translator translator = new FIWAREv2Translator();
+				Model translatedModel = translator.toJenaModel(responseBody);			
+				// Create a new message payload for the response message
+				MessagePayload responsePayload = new MessagePayload(translatedModel);
+				// Attach the payload to the message
+				responseMessage.setPayload(responsePayload);
 				logger.info("Device {} has been removed.", transformedId);
 			}
 			responseMessage.getMetadata().setStatus("OK");
@@ -128,11 +140,18 @@ public class OrionBridge extends AbstractBridge {
 		Message responseMessage = MessageUtils.createResponseMessage(message);
 		logger.info("Updating devices...");
 		Set<String> deviceIds = OrionV2Utils.getEntityIds(message);
+		Set<EntityID> deviceIdsAsEntities = OrionV2Utils.getEntityIdsAsEntityIDSet(message);
 		for(String deviceId : deviceIds){
 			try {
 				FIWAREv2Translator translator = new FIWAREv2Translator();
 				String body = translator.toFormatX(message.getPayload().getJenaModel());
-				OrionV2Utils.updateEntity(BASE_PATH, deviceId, body);	
+				String responseBody = OrionV2Utils.updateEntity(BASE_PATH, deviceId, body);
+				// Get the Model from the response
+				Model translatedModel = translator.toJenaModel(responseBody);			
+				// Create a new message payload for the response message
+				MessagePayload responsePayload = new MessagePayload(translatedModel);
+				// Attach the payload to the message
+				responseMessage.setPayload(responsePayload);
 				logger.info("Device {} has been updated.", deviceId);
 			} 
 			catch (Exception e) {
@@ -151,6 +170,7 @@ public class OrionBridge extends AbstractBridge {
 		try{
 			// Discover all the registered devices
 			String responseBody = OrionV2Utils.discoverEntities(BASE_PATH);
+			logger.info(responseBody);
 			FIWAREv2Translator translator = new FIWAREv2Translator();
 			// Create the model from the response JSON
 			Model translatedModel = translator.toJenaModel(responseBody);
@@ -176,9 +196,9 @@ public class OrionBridge extends AbstractBridge {
 		try{
 			Set<String> deviceIds = OrionV2Utils.getEntityIds(message);
 			for(String deviceId : deviceIds){
-				HttpResponse response = OrionV2Utils.queryEntityById(BASE_PATH, deviceId);
-				logger.info(response.toString());	
-				String responseBody = response.getEntity().getContent().toString();
+				String responseBody = OrionV2Utils.queryEntityById(BASE_PATH, deviceId);
+				logger.info(responseBody);	
+				//String responseBody = response.getEntity().getContent().toString();
 				FIWAREv2Translator translator = new FIWAREv2Translator();
 				// Create the model from the response JSON
 				Model translatedModel = translator.toJenaModel(responseBody);
@@ -231,7 +251,13 @@ public class OrionBridge extends AbstractBridge {
 			try {
 				FIWAREv2Translator translator = new FIWAREv2Translator();
 				String body = translator.toFormatX(message.getPayload().getJenaModel());
-				OrionV2Utils.publishEntityObservation(BASE_PATH, deviceId, body);					
+				String responseBody = OrionV2Utils.publishEntityObservation(BASE_PATH, deviceId, body);
+				// Get the Model from the response
+				Model translatedModel = translator.toJenaModel(responseBody);			
+				// Create a new message payload for the response message
+				MessagePayload responsePayload = new MessagePayload(translatedModel);
+				// Attach the payload to the message
+				responseMessage.setPayload(responsePayload);
 			} 
 			catch (Exception e) {
 				logger.error("Error in observe: " + e.getMessage());
@@ -262,7 +288,7 @@ public class OrionBridge extends AbstractBridge {
 			// Add the callback address to the body 
 			requestBody = OrionV2Utils.buildJsonWithUrl(requestBody, callbackAddres);
 			// Create the subscription
-			String responseBody = OrionV2Utils.createSubscription(BASE_PATH, requestBody).getEntity().toString();
+			String responseBody = OrionV2Utils.createSubscription(BASE_PATH, requestBody);
 			// Get the Model from the response
 			Model translatedModel = translator.toJenaModel(responseBody);			
 			// Create a new message payload for the response message
@@ -288,7 +314,14 @@ public class OrionBridge extends AbstractBridge {
 			Set<String> entityIds = OrionV2Utils.getEntityIds(message);
 			for (String entityId : entityIds) {
 				logger.info("Unsubscribing {}...", entityId);
-				OrionV2Utils.removeSubscription(BASE_PATH, entityId);
+				String responseBody = OrionV2Utils.removeSubscription(BASE_PATH, entityId);
+				// Get the Model from the response
+				FIWAREv2Translator translator = new FIWAREv2Translator();
+				Model translatedModel = translator.toJenaModel(responseBody);			
+				// Create a new message payload for the response message
+				MessagePayload responsePayload = new MessagePayload(translatedModel);
+				// Attach the payload to the message
+				responseMessage.setPayload(responsePayload);
 			}
 			responseMessage.getMetadata().setStatus("OK");
 		}

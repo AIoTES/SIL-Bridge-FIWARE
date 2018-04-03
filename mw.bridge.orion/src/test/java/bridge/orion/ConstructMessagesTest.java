@@ -53,9 +53,9 @@ public class ConstructMessagesTest {
 		//mapJsons.put(MessageTypesEnum.SUBSCRIBE, "messagesV2/02_susbcribe.json");
 		//mapJsons.put(MessageTypesEnum.UNSUBSCRIBE, "messagesV2/03_unsusbcribe.json");
 		//mapJsons.put(MessageTypesEnum.PLATFORM_CREATE_DEVICE, "messagesV2/06_platform_create_device.json");
-//		mapJsons.put(MessageTypesEnum.PLATFORM_CREATE_DEVICE, "messagesV2/06_platform_create_device2.json");
-//		mapJsons.put(MessageTypesEnum.PLATFORM_UPDATE_DEVICE, "messagesV2/08_platform_update_device.json");
-		mapJsons.put(MessageTypesEnum.LIST_DEVICES, "messagesV2/05_list_devices.json");
+		//mapJsons.put(MessageTypesEnum.PLATFORM_CREATE_DEVICE, "messagesV2/06_platform_create_device2.json");
+		mapJsons.put(MessageTypesEnum.PLATFORM_UPDATE_DEVICE, "messagesV2/08_platform_update_device.json");
+		//mapJsons.put(MessageTypesEnum.LIST_DEVICES, "messagesV2/05_list_devices.json");
 //		mapJsons.put(MessageTypesEnum.QUERY, "messagesV2/04_query.json");
 //		mapJsons.put(MessageTypesEnum.PLATFORM_DELETE_DEVICE, "messagesV2/07_platform_delete_device.json");
 //		mapJsons.put(MessageTypesEnum.OBSERVATION, "messagesV2/09_observation.json");

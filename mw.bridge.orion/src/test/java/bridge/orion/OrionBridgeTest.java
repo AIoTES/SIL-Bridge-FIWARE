@@ -36,7 +36,7 @@ public class OrionBridgeTest {
 	 * }
 	 */
 
-	//@Test
+	@Test
 	public void tests() {
 
 		Configuration configuration;
@@ -69,6 +69,11 @@ public class OrionBridgeTest {
 			System.out.println(thingUnregisterJson1);
 			Message thingUnregisterMsg = new Message(thingUnregisterJson1);
 			
+			URL url5 = Resources.getResource("messagesV2/08_platform_update_device2.json");
+			String thingUpdateJson = Resources.toString(url5, Charsets.UTF_8);
+			System.out.println(thingUpdateJson);
+			Message thingUpdateMsg = new Message(thingUpdateJson);			
+			
 			orionBridge = new OrionBridge(configuration, platform);
 
 			String basepath = configuration.getProperty("orion-base-path");
@@ -76,7 +81,8 @@ public class OrionBridgeTest {
 
 			//orionBridge.send(thingRegisterMsg);
 			//orionBridge.send(thingQueryMsg);
-			orionBridge.send(thingUnregisterMsg);
+			//orionBridge.send(thingUnregisterMsg);
+			orionBridge.send(thingUpdateMsg);
 			//FIWAREv2Translator translator = new FIWAREv2Translator();			
 			//String body = translator.toFormatX(thingRegisterMsg.getPayload().getJenaModel());
 			
@@ -101,7 +107,7 @@ public class OrionBridgeTest {
 
 	}
 	
-	@Test
+	//@Test
 	public void TestBuildUrl(){
 		String body = "{\r\n" + 
 				"  \"description\": \"A subscription to get info about Room1\",\r\n" + 
