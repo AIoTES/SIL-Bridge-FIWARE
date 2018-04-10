@@ -1,6 +1,7 @@
 package eu.interiot.intermw.bridge.orion;
 
 import java.io.IOException;
+import java.util.HashSet;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -16,7 +17,10 @@ import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClientBuilder;
 import org.apache.http.util.EntityUtils;
 import org.apache.jena.rdf.model.Model;
+import org.apache.jena.rdf.model.Property;
+import org.apache.jena.rdf.model.RDFNode;
 import org.apache.jena.rdf.model.SimpleSelector;
+import org.apache.jena.rdf.model.StmtIterator;
 import org.apache.jena.vocabulary.RDF;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -65,6 +69,8 @@ public class OrionV2Utils {
     
     // Types
     public static final String EntityTypeDevice = FIWAREv2Translator.FIWAREbaseURI + "Entity";
+    
+    public static final String propHasIdURI = FIWAREv2Translator.FIWAREbaseURI + "hasId";
        	
 	public static String registerEntity(String baseUrl, String body) throws IOException {
 		String completeUrl = baseUrl + FIWARE_ENTITY_REGISTER;
@@ -198,11 +204,11 @@ public class OrionV2Utils {
     public static String filterThingID(String thingId) {
     	String filteredString = thingId;
 		// Check algorithm is optimal+
-		if (filteredString.contains("http://inter-iot.eu/dev/")) {
+    	if (filteredString.contains("http://inter-iot.eu/dev/")) {
 			filteredString = thingId.replace("http://inter-iot.eu/dev/", "");
 		} 
 		if (filteredString.contains("/")) {
-			filteredString = filteredString.replace("/", "-");
+			filteredString = filteredString.replace("/", "");
 		}
 		if (filteredString.contains("#")) {
 			filteredString = filteredString.replace("#", "+");
@@ -276,6 +282,31 @@ public class OrionV2Utils {
     
     public static Set<EntityID> getEntityIdsAsEntityIDSet(Message message){
 		return getEntityIDsFromPayloadAsEntityIDSet(message.getPayload(), EntityTypeDevice);
+	}
+    
+    public static Set<String> getIdFromPayload(EntityID entityID, MessagePayload payload) {
+        Model payloadModel = payload.getJenaModel();
+        Set<String> names = new HashSet<>();
+        Property hasName = payloadModel.createProperty(propHasIdURI);
+        StmtIterator stmtIt = payloadModel.listStatements(new SimpleSelector(entityID.getJenaResource(), hasName, (RDFNode) null));
+        while (stmtIt.hasNext()) {
+            RDFNode node = stmtIt.next().getObject();
+            if (node.isLiteral()) {
+                names.add(node.asLiteral().getValue().toString());
+            } else {
+                names.add(node.toString());
+            }
+        }
+        return names;
+    }
+    
+    public static Set<String> getDeviceIds(Message message){
+		Set<EntityID> entityIds = getEntityIDsFromPayloadAsEntityIDSet(message.getPayload(), EntityTypeDevice);
+		Set<String> deviceIds = new HashSet<>();
+		for (EntityID entityId : entityIds) {
+			deviceIds.addAll(getIdFromPayload(entityId, message.getPayload()));
+		}
+		return deviceIds;
 	}
     
     /**

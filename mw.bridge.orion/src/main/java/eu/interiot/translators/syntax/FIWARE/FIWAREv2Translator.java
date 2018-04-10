@@ -145,6 +145,9 @@ public class FIWAREv2Translator extends SyntacticTranslator<String> {
         JsonNode topLevelNode = mapper.readTree(parser);
 
         Model jenaModel = ModelFactory.createDefaultModel();
+        
+        // If there is no top leve node, return the default model
+        if (topLevelNode == null) return jenaModel;
 
         if (topLevelNode.isObject()) {
             Resource myEntity = jenaModel.createResource();

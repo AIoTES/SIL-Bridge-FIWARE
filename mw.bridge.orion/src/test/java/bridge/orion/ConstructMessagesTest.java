@@ -2,8 +2,8 @@ package bridge.orion;
 
 import java.io.IOException;
 import java.net.URL;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.ArrayList;
+import java.util.List;
 
 import org.apache.jena.rdf.model.Model;
 import org.junit.Test;
@@ -38,7 +38,7 @@ public class ConstructMessagesTest {
 	String platformId;
 	
 	@Test
-	public void test() throws MiddlewareException {
+	public void buildAndTest() throws MiddlewareException {
 		//TODO - Must configure a real platform for tests and conect it to Docker Bridge Orion
 		platformId = "http://inter-iot.eu/example-platform127";
 		platform = new Platform(new PlatformId(platformId), "Test", new PlatformType("FIWARE"), "http://www.w3.org/ns/sosa/Platform", new OntologyId("GOIoTP#SoftwarePlatform")); //baseUrl, Ontology
@@ -46,8 +46,19 @@ public class ConstructMessagesTest {
 		orionBridge = new OrionBridge(configuration, platform);
 		BASE_PATH = configuration.getProperty("orion-base-path");
 		
+		List<MessageTest> messages = new ArrayList<MessageTest> ();
+		//messages.add(new MessageTest(MessageTypesEnum.PLATFORM_CREATE_DEVICE, "messagesV2/06_platform_create_device.json"));
+		messages.add(new MessageTest(MessageTypesEnum.PLATFORM_CREATE_DEVICE, "messagesV2/06_platform_create_device2.json"));
+		messages.add(new MessageTest(MessageTypesEnum.LIST_DEVICES, "messagesV2/05_list_devices.json"));
+		//messages.add(new MessageTest(MessageTypesEnum.PLATFORM_UPDATE_DEVICE, "messagesV2/08_platform_update_device.json"));
+		messages.add(new MessageTest(MessageTypesEnum.PLATFORM_UPDATE_DEVICE, "messagesV2/08_platform_update_device2.json"));
+		messages.add(new MessageTest(MessageTypesEnum.LIST_DEVICES, "messagesV2/05_list_devices.json"));
+		//messages.add(new MessageTest(MessageTypesEnum.PLATFORM_DELETE_DEVICE, "messagesV2/07_platform_delete_device.json"));
+		messages.add(new MessageTest(MessageTypesEnum.PLATFORM_DELETE_DEVICE, "messagesV2/07_platform_delete_device2.json"));
+		messages.add(new MessageTest(MessageTypesEnum.LIST_DEVICES, "messagesV2/05_list_devices.json"));
+		
 		//Set json fiware for test
-		Map<MessageTypesEnum, String> mapJsons = new HashMap<MessageTypesEnum,String>();
+		//Map<MessageTypesEnum, String> mapJsons = new HashMap<MessageTypesEnum,String>();
 		//mapJsons.put(MessageTypesEnum.PLATFORM_REGISTER, "messagesV2/00_platform_register.json");
 		//mapJsons.put(MessageTypesEnum.PLATFORM_UNREGISTER, "messagesV2/01_platform_unregister.json");
 		//mapJsons.put(MessageTypesEnum.SUBSCRIBE, "messagesV2/02_susbcribe.json");
@@ -55,28 +66,28 @@ public class ConstructMessagesTest {
 		//mapJsons.put(MessageTypesEnum.PLATFORM_CREATE_DEVICE, "messagesV2/06_platform_create_device.json");
 		//mapJsons.put(MessageTypesEnum.PLATFORM_CREATE_DEVICE, "messagesV2/06_platform_create_device2.json");
 		//mapJsons.put(MessageTypesEnum.PLATFORM_UPDATE_DEVICE, "messagesV2/08_platform_update_device.json");
-		mapJsons.put(MessageTypesEnum.PLATFORM_UPDATE_DEVICE, "messagesV2/08_platform_update_device2.json");
+		//mapJsons.put(MessageTypesEnum.PLATFORM_UPDATE_DEVICE, "messagesV2/08_platform_update_device2.json");
 		//mapJsons.put(MessageTypesEnum.LIST_DEVICES, "messagesV2/05_list_devices.json");
-//		mapJsons.put(MessageTypesEnum.QUERY, "messagesV2/04_query.json");
-//		mapJsons.put(MessageTypesEnum.PLATFORM_DELETE_DEVICE, "messagesV2/07_platform_delete_device.json");
-//		mapJsons.put(MessageTypesEnum.OBSERVATION, "messagesV2/09_observation.json");
-//		mapJsons.put(MessageTypesEnum.ACTUATION, "messagesV2/10_actuation.json");
-//		mapJsons.put(MessageTypesEnum.ERROR, "messagesV2/11_error.json");
+		//mapJsons.put(MessageTypesEnum.QUERY, "messagesV2/04_query.json");
+		//mapJsons.put(MessageTypesEnum.PLATFORM_DELETE_DEVICE, "messagesV2/07_platform_delete_device.json");
+		//mapJsons.put(MessageTypesEnum.OBSERVATION, "messagesV2/09_observation.json");
+		//mapJsons.put(MessageTypesEnum.ACTUATION, "messagesV2/10_actuation.json");
+		//mapJsons.put(MessageTypesEnum.ERROR, "messagesV2/11_error.json");
 		
 		//Iterate the Map
-		mapJsons.entrySet().forEach(entry -> {
+		messages.forEach(entry -> {
 		    Message messageResponsePlatform = new Message();
-		    URL url = Resources.getResource(entry.getValue());
+		    URL url = Resources.getResource(entry.getFilePath());
 		    
 		    try{
 			    if(!Resources.toString(url, Charsets.UTF_8).contains("@graph")){
 			    	//Generate Metadata for MessageResponse
-				    OrionV2Utils.generatePlatformMetadaToMessageResponse(messageResponsePlatform, entry.getKey(), platformId);
+				    OrionV2Utils.generatePlatformMetadaToMessageResponse(messageResponsePlatform, entry.getMessageType(), platformId);
 					
 					try {
 						//Generate Payload for MessageResponse
 						generatePayloadToMessageResponse(messageResponsePlatform, BASE_PATH,Resources.toString(url, Charsets.UTF_8));
-						System.out.println("---- Printing "+entry.getValue()+" ----");
+						System.out.println("---- Printing " + entry.getFilePath() + " ----");
 						System.out.println(messageResponsePlatform.serializeToJSONLD());
 					} catch (UnsupportedOperationException | IOException e) {
 						e.printStackTrace();
@@ -114,6 +125,32 @@ public class ConstructMessagesTest {
 		Gson gson = new GsonBuilder().setPrettyPrinting().create();
 		
 		return gson.toJson(jsonObject);
+	}
+	
+	class MessageTest{
+		MessageTypesEnum messageType;
+		String filePath = null;
+		
+		MessageTest(MessageTypesEnum messageType, String filePath){
+			this.messageType = messageType;
+			this.filePath = filePath;
+		}
+
+		public MessageTypesEnum getMessageType() {
+			return messageType;
+		}
+
+		public void setMessageType(MessageTypesEnum messageType) {
+			this.messageType = messageType;
+		}
+
+		public String getFilePath() {
+			return filePath;
+		}
+
+		public void setFilePath(String filePath) {
+			this.filePath = filePath;
+		}		
 	}
 	
 	/**

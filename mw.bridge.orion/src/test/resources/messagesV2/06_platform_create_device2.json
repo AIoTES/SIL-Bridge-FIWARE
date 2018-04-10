@@ -1,12 +1,60 @@
 {
-  "id": "Room2",
-  "type": "Room",
-  "temperature": {
-    "value": 21,
-    "type": "Float"
-  },
-  "pressure": {
-    "value": 711,
-    "type": "Integer"
+  "@graph" : [ {
+    "@graph" : [ {
+      "@id" : "InterIoTMsg:meta/078af8d2-231c-4496-a6c7-59704e4d2edb",
+      "@type" : [ "InterIoTMsg:Platform_create_Device", "InterIoTMsg:meta" ],
+      "InterIoTMsg:ReceiverPlatformId" : {
+        "@id" : "InterIoT:example-platform127"
+      },
+      "InterIoTMsg:conversationID" : "conv1f3a03a7-2125-47e2-a75d-ed93d88120fc",
+      "InterIoTMsg:dateTimeStamp" : "2018-04-10T12:14:54.374+02:00",
+      "InterIoTMsg:messageID" : "msgb5d1c1f1-0ba9-4f48-bbd4-f9e945a9902f"
+    } ],
+    "@id" : "InterIoTMsg:metadata"
+  }, {
+    "@graph" : [ {
+      "@id" : "_:b0",
+      "InterIoT:syntax/FIWAREv2#hasAttrValue" : {
+        "@type" : "http://www.w3.org/2001/XMLSchema#int",
+        "@value" : "23"
+      },
+      "InterIoT:syntax/FIWAREv2#hasType" : "Float"
+    }, {
+      "@id" : "_:b1",
+      "@type" : "InterIoT:syntax/FIWAREv2#Attribute",
+      "InterIoT:syntax/FIWAREv2#hasName" : "temperature",
+      "InterIoT:syntax/FIWAREv2#hasValue" : {
+        "@id" : "_:b0"
+      }
+    }, {
+      "@id" : "http://Room1",
+      "@type" : "InterIoT:syntax/FIWAREv2#Entity",
+      "InterIoT:syntax/FIWAREv2#hasAttribute" : [ {
+        "@id" : "_:b3"
+      }, {
+        "@id" : "_:b1"
+      } ],
+      "InterIoT:syntax/FIWAREv2#hasId" : "Room1",
+      "InterIoT:syntax/FIWAREv2#hasType" : "Room"
+    }, {
+      "@id" : "_:b3",
+      "@type" : "InterIoT:syntax/FIWAREv2#Attribute",
+      "InterIoT:syntax/FIWAREv2#hasName" : "pressure",
+      "InterIoT:syntax/FIWAREv2#hasValue" : {
+        "@id" : "_:b4"
+      }
+    }, {
+      "@id" : "_:b4",
+      "InterIoT:syntax/FIWAREv2#hasAttrValue" : {
+        "@type" : "http://www.w3.org/2001/XMLSchema#int",
+        "@value" : "720"
+      },
+      "InterIoT:syntax/FIWAREv2#hasType" : "Integer"
+    } ],
+    "@id" : "InterIoTMsg:payload"
+  } ],
+  "@context" : {
+    "InterIoTMsg" : "http://inter-iot.eu/message/",
+    "InterIoT" : "http://inter-iot.eu/"
   }
 }

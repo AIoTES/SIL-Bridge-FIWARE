@@ -63,7 +63,7 @@
 							"@id": "_:b0"
 						}
 					],
-					"InterIoT:syntax/FIWAREv2#hasId": "http://Room1"
+					"InterIoT:syntax/FIWAREv2#hasId": "Room1"
 				}
 			],
 			"@id": "InterIoTMsg:payload"
