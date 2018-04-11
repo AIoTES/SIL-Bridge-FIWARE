@@ -287,7 +287,7 @@ public class OrionBridge extends AbstractBridge {
 			// Translate the message into Fiware JSON
 			String requestBody = translator.toFormatX(message.getPayload().getJenaModel());
 			// Add the callback address to the body 
-			requestBody = OrionV2Utils.buildJsonWithUrl(requestBody, callbackAddres);
+			//requestBody = OrionV2Utils.buildJsonWithUrl(requestBody, callbackAddres);
 			// Create the subscription
 			String responseBody = OrionV2Utils.createSubscription(BASE_PATH, requestBody);
 			// Get the Model from the response

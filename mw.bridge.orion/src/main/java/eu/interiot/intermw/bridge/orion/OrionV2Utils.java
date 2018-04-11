@@ -108,7 +108,7 @@ public class OrionV2Utils {
     
 	public static String createSubscription(String baseUrl, String body) throws IOException {
 		String completeUrl = baseUrl + FIWARE_ENTITY_SUBSCRIBE;
-		return postToFiware(completeUrl, body); 
+		return buildJsonWithSubscriptionId(postToFiware(completeUrl, body)); 
 	}
 
 	public static String removeSubscription(String baseUrl, String subscriptionId) throws IOException {
@@ -128,6 +128,11 @@ public class OrionV2Utils {
 			response = httpClient.execute(httpPost);
 			if(response != null && response.getEntity() != null){
 				responseBody = EntityUtils.toString(response.getEntity());
+				if(responseBody == null || responseBody.length() == 0){
+					if(url.contains(FIWARE_ENTITY_SUBSCRIBE)){
+						responseBody = response.getHeaders("Location")[0].toString();
+					}
+				}
 				logger.info(responseBody);
 			}
 		} catch (IOException e) {
@@ -262,6 +267,14 @@ public class OrionV2Utils {
     		}    		
     	}
     	return jsonBody.toString();	
+    }
+    
+    public static String buildJsonWithSubscriptionId(String responseBody){
+    	JsonObject jsonObjectFinal = new JsonObject();
+    	String[] locationSplit = responseBody.split("/");
+    	String location = locationSplit[locationSplit.length-1];
+    	jsonObjectFinal.addProperty("subscriptionId", location);
+    	return jsonObjectFinal.toString();
     }
     
     public static String removeId(String body){

@@ -38,6 +38,8 @@ public class ConstructMessagesTest {
 	String BASE_PATH;
 	String platformId;
 	
+	boolean idsTransformation = false;
+	
 	@Test
 	public void buildAndTest() throws MiddlewareException {
 		//TODO - Must configure a real platform for tests and conect it to Docker Bridge Orion
@@ -52,6 +54,8 @@ public class ConstructMessagesTest {
 		messages.add(new MessageTest(MessageTypesEnum.LIST_DEVICES, "messagesV2/05_list_devices.json"));
 		messages.add(new MessageTest(MessageTypesEnum.PLATFORM_UPDATE_DEVICE, "messagesV2/08_platform_update_device.json"));
 		messages.add(new MessageTest(MessageTypesEnum.LIST_DEVICES, "messagesV2/05_list_devices.json"));
+		messages.add(new MessageTest(MessageTypesEnum.SUBSCRIBE, "messagesV2/02_susbcribe.json"));
+		//messages.add(new MessageTest(MessageTypesEnum.UNSUBSCRIBE, "messagesV2/03_unsusbcribe.json"));
 		messages.add(new MessageTest(MessageTypesEnum.PLATFORM_DELETE_DEVICE, "messagesV2/07_platform_delete_device.json"));
 		messages.add(new MessageTest(MessageTypesEnum.LIST_DEVICES, "messagesV2/05_list_devices.json"));
 		
@@ -59,8 +63,6 @@ public class ConstructMessagesTest {
 		//Map<MessageTypesEnum, String> mapJsons = new HashMap<MessageTypesEnum,String>();
 		//mapJsons.put(MessageTypesEnum.PLATFORM_REGISTER, "messagesV2/00_platform_register.json");
 		//mapJsons.put(MessageTypesEnum.PLATFORM_UNREGISTER, "messagesV2/01_platform_unregister.json");
-		//mapJsons.put(MessageTypesEnum.SUBSCRIBE, "messagesV2/02_susbcribe.json");
-		//mapJsons.put(MessageTypesEnum.UNSUBSCRIBE, "messagesV2/03_unsusbcribe.json");
 		//mapJsons.put(MessageTypesEnum.QUERY, "messagesV2/04_query.json");
 		//mapJsons.put(MessageTypesEnum.OBSERVATION, "messagesV2/09_observation.json");
 		//mapJsons.put(MessageTypesEnum.ACTUATION, "messagesV2/10_actuation.json");
@@ -78,7 +80,7 @@ public class ConstructMessagesTest {
 					
 					try {
 						//Generate Payload for MessageResponse
-						generatePayloadToMessageResponse(messageResponsePlatform, BASE_PATH,Resources.toString(url, Charsets.UTF_8));
+						generatePayloadToMessageResponse(messageResponsePlatform, BASE_PATH, Resources.toString(url, Charsets.UTF_8), idsTransformation);
 						System.out.println("---- Printing " + entry.getFilePath() + " ----");
 						System.out.println(messageResponsePlatform.serializeToJSONLD());
 					} catch (UnsupportedOperationException | IOException e) {
@@ -122,10 +124,12 @@ public class ConstructMessagesTest {
 	class MessageTest{
 		MessageTypesEnum messageType;
 		String filePath = null;
+		boolean manageId;
 		
 		MessageTest(MessageTypesEnum messageType, String filePath){
 			this.messageType = messageType;
 			this.filePath = filePath;
+			this.manageId = manageId;
 		}
 
 		public MessageTypesEnum getMessageType() {
@@ -142,6 +146,14 @@ public class ConstructMessagesTest {
 
 		public void setFilePath(String filePath) {
 			this.filePath = filePath;
+		}
+
+		public boolean isManageId() {
+			return manageId;
+		}
+
+		public void setManageId(boolean manageId) {
+			this.manageId = manageId;
 		}		
 	}
 	
@@ -152,15 +164,22 @@ public class ConstructMessagesTest {
 	 * @throws UnsupportedOperationException
 	 * @throws IOException
 	 */
-	public static void generatePayloadToMessageResponse(Message messageResponse, String BASE_PATH, String responseBody) throws UnsupportedOperationException, IOException {
+	public static void generatePayloadToMessageResponse(Message messageResponse, String BASE_PATH, String responseBody, boolean manageId) throws UnsupportedOperationException, IOException {
 		FIWAREv2Translator translator = new FIWAREv2Translator();
 		// Create the model from the response JSON
 		Model translatedModel = translator.toJenaModel(responseBody);
-		// Transform the message ids
-		SimpleIdTransformer transformer = new SimpleIdTransformer();
-		Model transformedModel = transformer.transformTowardsINTERMW(translatedModel);
-		// Create a new message payload for the response message
-		MessagePayload responsePayload = new MessagePayload(transformedModel);
+		MessagePayload responsePayload = null;
+		if(manageId){
+			// Transform the message ids
+			SimpleIdTransformer transformer = new SimpleIdTransformer();
+			Model transformedModel = transformer.transformTowardsINTERMW(translatedModel);
+			// Create a new message payload for the response message
+			responsePayload = new MessagePayload(transformedModel);
+		}
+		else{
+			// Create a new message payload for the response message
+			responsePayload = new MessagePayload(translatedModel);
+		}		
 		// Attach the payload to the message
 		messageResponse.setPayload(responsePayload);
     }

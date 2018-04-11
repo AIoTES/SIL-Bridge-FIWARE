@@ -86,6 +86,8 @@ public class FIWAREv2Translator extends SyntacticTranslator<String> {
     private Resource valueType;
     
     public static String FIWAREbaseURI = "http://inter-iot.eu/syntax/FIWAREv2#";
+    
+    protected int currentGeneratedId = 0;
 
     public FIWAREv2Translator() {
         super(FIWAREbaseURI, "NGSIv2");
@@ -150,14 +152,14 @@ public class FIWAREv2Translator extends SyntacticTranslator<String> {
         if (topLevelNode == null) return jenaModel;
 
         if (topLevelNode.isObject()) {
-            Resource myEntity = jenaModel.createResource();
+            Resource myEntity = jenaModel.createResource(FIWAREbaseURI + "_" + (currentGeneratedId++));
             parseJSONObjectToJena(myEntity, topLevelNode, jenaModel);
         } else if (topLevelNode.isArray()) {
-            Resource arrayResource = jenaModel.createResource();
+            Resource arrayResource = jenaModel.createResource(FIWAREbaseURI + "_" + (currentGeneratedId++));
             arrayResource.addProperty(RDF.type, arrayType);
             parseArrayToJena(arrayResource, topLevelNode, jenaModel);
         } else if (topLevelNode.isValueNode()) {
-            Resource valueResource = jenaModel.createResource();
+            Resource valueResource = jenaModel.createResource(FIWAREbaseURI + "_" + (currentGeneratedId++));
             valueResource.addProperty(RDF.type, valueType);
             parseValueToJena(valueResource, topLevelNode, false, jenaModel);
 //            valueResource.addProperty(hasValue, topLevelNode.asText());
@@ -183,14 +185,14 @@ public class FIWAREv2Translator extends SyntacticTranslator<String> {
                 parseValueToJena(objectResource, field.getValue(), true, jenaModel);
             } else if (field.getKey().equals("metadata")) {
                 //Add metadata to object
-                Resource jenaMetadata = jenaModel.createResource();
+                Resource jenaMetadata = jenaModel.createResource(FIWAREbaseURI + "_" + (currentGeneratedId++));
                 jenaMetadata.addProperty(RDF.type, metadataType);
                 objectResource.addProperty(hasMetadata, jenaMetadata);
 
                 parseJSONObjectToJena(jenaMetadata, field.getValue(), jenaModel);
             } else {
                 //Add attribute to object
-                Resource attr = jenaModel.createResource();
+                Resource attr = jenaModel.createResource(FIWAREbaseURI + "_" + (currentGeneratedId++));
                 attr.addProperty(RDF.type, attributeType);
                 objectResource.addProperty(hasAttribute, attr);
                 attr.addProperty(hasName, field.getKey());
@@ -235,14 +237,14 @@ public class FIWAREv2Translator extends SyntacticTranslator<String> {
 //            res.addLiteral(hasValProperty, jsonNode.asText());
         } else if (jsonNode.isArray()) {
             //If its an array of values
-            Resource arrayResource = jenaModel.createResource();
+            Resource arrayResource = jenaModel.createResource(FIWAREbaseURI + "_" + (currentGeneratedId++));
             arrayResource.addProperty(RDF.type, arrayType);
             res.addProperty(hasValProperty, arrayResource);
 
             parseArrayToJena(arrayResource, jsonNode, jenaModel);
         } else if (jsonNode.isObject()) {
             //If its a JSON object
-            Resource objectResource = jenaModel.createResource();
+            Resource objectResource = jenaModel.createResource(FIWAREbaseURI + "_" + (currentGeneratedId++));
             //TODO: Add type to object resource? Is this necessary?
 //            objectResource.addProperty(RDF.type, "xxxxxx");
             res.addProperty(hasValProperty, objectResource);
@@ -255,7 +257,7 @@ public class FIWAREv2Translator extends SyntacticTranslator<String> {
         Iterator<JsonNode> arrayIt = arrayNode.elements();
         while (arrayIt.hasNext()) {
             JsonNode element = arrayIt.next();
-            Resource jenaElement = jenaModel.createResource();
+            Resource jenaElement = jenaModel.createResource(FIWAREbaseURI + "_" + (currentGeneratedId++));
             jenaElement.addProperty(RDF.type, elementType);
             arrayResource.addProperty(hasElement, jenaElement);
             jenaElement.addLiteral(hasNumber, new Integer(counter++));
