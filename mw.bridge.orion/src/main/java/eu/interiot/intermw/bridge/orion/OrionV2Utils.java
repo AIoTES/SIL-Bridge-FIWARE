@@ -126,8 +126,10 @@ public class OrionV2Utils {
         String responseBody = "";
 		try {
 			response = httpClient.execute(httpPost);
-			responseBody = EntityUtils.toString(response.getEntity());
-			System.out.println(response.toString());
+			if(response != null && response.getEntity() != null){
+				responseBody = EntityUtils.toString(response.getEntity());
+				logger.info(responseBody);
+			}
 		} catch (IOException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
@@ -147,7 +149,10 @@ public class OrionV2Utils {
         String responseBody = "";
 		try {
 			response = httpClient.execute(httpGet);
-			responseBody = EntityUtils.toString(response.getEntity());
+			if(response != null && response.getEntity() != null){
+				responseBody = EntityUtils.toString(response.getEntity());
+				logger.info(responseBody);
+			}
 		} catch (IOException e) {
 			e.printStackTrace();
 		}finally {
@@ -168,8 +173,10 @@ public class OrionV2Utils {
         String responseBody = "";
         try {
 			response = httpClient.execute(httpPut);
-			responseBody = EntityUtils.toString(response.getEntity());
-			logger.info(responseBody);
+			if(response != null && response.getEntity() != null){
+				responseBody = EntityUtils.toString(response.getEntity());
+				logger.info(responseBody);
+			}
 		} catch (IOException e) {
 			e.printStackTrace();
 		}finally {
@@ -188,8 +195,10 @@ public class OrionV2Utils {
     	String responseBody = "";
     	try {
 			response = httpClient.execute(httpDelete);
-			responseBody = EntityUtils.toString(response.getEntity());
-			logger.info(responseBody);
+			if(response != null && response.getEntity() != null){
+				responseBody = EntityUtils.toString(response.getEntity());
+				logger.info(responseBody);
+			}
 		} catch (IOException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
@@ -207,6 +216,9 @@ public class OrionV2Utils {
     	if (filteredString.contains("http://inter-iot.eu/dev/")) {
 			filteredString = thingId.replace("http://inter-iot.eu/dev/", "");
 		} 
+    	if (filteredString.contains("http://")) {
+			filteredString = filteredString.replace("://", "_");
+		}
 		if (filteredString.contains("/")) {
 			filteredString = filteredString.replace("/", "");
 		}

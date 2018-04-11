@@ -29,6 +29,7 @@ import eu.interiot.message.Message;
 import eu.interiot.message.MessagePayload;
 import eu.interiot.message.managers.URI.URIManagerMessageMetadata.MessageTypesEnum;
 import eu.interiot.translators.syntax.FIWARE.FIWAREv2Translator;
+import eu.interiot.translators.syntax.FIWARE.SimpleIdTransformer;
 
 public class ConstructMessagesTest {
 	Configuration configuration;
@@ -47,14 +48,11 @@ public class ConstructMessagesTest {
 		BASE_PATH = configuration.getProperty("orion-base-path");
 		
 		List<MessageTest> messages = new ArrayList<MessageTest> ();
-		//messages.add(new MessageTest(MessageTypesEnum.PLATFORM_CREATE_DEVICE, "messagesV2/06_platform_create_device.json"));
-		messages.add(new MessageTest(MessageTypesEnum.PLATFORM_CREATE_DEVICE, "messagesV2/06_platform_create_device2.json"));
+		messages.add(new MessageTest(MessageTypesEnum.PLATFORM_CREATE_DEVICE, "messagesV2/06_platform_create_device.json"));
 		messages.add(new MessageTest(MessageTypesEnum.LIST_DEVICES, "messagesV2/05_list_devices.json"));
-		//messages.add(new MessageTest(MessageTypesEnum.PLATFORM_UPDATE_DEVICE, "messagesV2/08_platform_update_device.json"));
-		messages.add(new MessageTest(MessageTypesEnum.PLATFORM_UPDATE_DEVICE, "messagesV2/08_platform_update_device2.json"));
+		messages.add(new MessageTest(MessageTypesEnum.PLATFORM_UPDATE_DEVICE, "messagesV2/08_platform_update_device.json"));
 		messages.add(new MessageTest(MessageTypesEnum.LIST_DEVICES, "messagesV2/05_list_devices.json"));
-		//messages.add(new MessageTest(MessageTypesEnum.PLATFORM_DELETE_DEVICE, "messagesV2/07_platform_delete_device.json"));
-		messages.add(new MessageTest(MessageTypesEnum.PLATFORM_DELETE_DEVICE, "messagesV2/07_platform_delete_device2.json"));
+		messages.add(new MessageTest(MessageTypesEnum.PLATFORM_DELETE_DEVICE, "messagesV2/07_platform_delete_device.json"));
 		messages.add(new MessageTest(MessageTypesEnum.LIST_DEVICES, "messagesV2/05_list_devices.json"));
 		
 		//Set json fiware for test
@@ -63,13 +61,7 @@ public class ConstructMessagesTest {
 		//mapJsons.put(MessageTypesEnum.PLATFORM_UNREGISTER, "messagesV2/01_platform_unregister.json");
 		//mapJsons.put(MessageTypesEnum.SUBSCRIBE, "messagesV2/02_susbcribe.json");
 		//mapJsons.put(MessageTypesEnum.UNSUBSCRIBE, "messagesV2/03_unsusbcribe.json");
-		//mapJsons.put(MessageTypesEnum.PLATFORM_CREATE_DEVICE, "messagesV2/06_platform_create_device.json");
-		//mapJsons.put(MessageTypesEnum.PLATFORM_CREATE_DEVICE, "messagesV2/06_platform_create_device2.json");
-		//mapJsons.put(MessageTypesEnum.PLATFORM_UPDATE_DEVICE, "messagesV2/08_platform_update_device.json");
-		//mapJsons.put(MessageTypesEnum.PLATFORM_UPDATE_DEVICE, "messagesV2/08_platform_update_device2.json");
-		//mapJsons.put(MessageTypesEnum.LIST_DEVICES, "messagesV2/05_list_devices.json");
 		//mapJsons.put(MessageTypesEnum.QUERY, "messagesV2/04_query.json");
-		//mapJsons.put(MessageTypesEnum.PLATFORM_DELETE_DEVICE, "messagesV2/07_platform_delete_device.json");
 		//mapJsons.put(MessageTypesEnum.OBSERVATION, "messagesV2/09_observation.json");
 		//mapJsons.put(MessageTypesEnum.ACTUATION, "messagesV2/10_actuation.json");
 		//mapJsons.put(MessageTypesEnum.ERROR, "messagesV2/11_error.json");
@@ -164,8 +156,11 @@ public class ConstructMessagesTest {
 		FIWAREv2Translator translator = new FIWAREv2Translator();
 		// Create the model from the response JSON
 		Model translatedModel = translator.toJenaModel(responseBody);
+		// Transform the message ids
+		SimpleIdTransformer transformer = new SimpleIdTransformer();
+		Model transformedModel = transformer.transformTowardsINTERMW(translatedModel);
 		// Create a new message payload for the response message
-		MessagePayload responsePayload = new MessagePayload(translatedModel);
+		MessagePayload responsePayload = new MessagePayload(transformedModel);
 		// Attach the payload to the message
 		messageResponse.setPayload(responsePayload);
     }
