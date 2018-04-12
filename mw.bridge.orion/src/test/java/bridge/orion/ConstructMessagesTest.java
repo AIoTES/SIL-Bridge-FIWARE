@@ -2,8 +2,11 @@ package bridge.orion;
 
 import java.io.IOException;
 import java.net.URL;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Scanner;
 
 import org.apache.jena.rdf.model.Model;
 import org.junit.Test;
@@ -29,7 +32,6 @@ import eu.interiot.message.Message;
 import eu.interiot.message.MessagePayload;
 import eu.interiot.message.managers.URI.URIManagerMessageMetadata.MessageTypesEnum;
 import eu.interiot.translators.syntax.FIWARE.FIWAREv2Translator;
-import eu.interiot.translators.syntax.FIWARE.SimpleIdTransformer;
 
 public class ConstructMessagesTest {
 	Configuration configuration;
@@ -38,7 +40,10 @@ public class ConstructMessagesTest {
 	String BASE_PATH;
 	String platformId;
 	
-	boolean idsTransformation = false;
+	protected boolean idsTransformation = false;
+	protected final String TEST_FILE_PATH = "messagesV2/";
+	protected final String TEST_COMPLETE_FILE_PATH = "src/test/resources/" + TEST_FILE_PATH;
+	protected final String TEST_FILE_NAME = "tmp_response_file.json";
 	
 	@Test
 	public void buildAndTest() throws MiddlewareException {
@@ -49,15 +54,19 @@ public class ConstructMessagesTest {
 		orionBridge = new OrionBridge(configuration, platform);
 		BASE_PATH = configuration.getProperty("orion-base-path");
 		
+		orionBridge.setTestMode(true);
+		orionBridge.setTestResultFilePath(TEST_COMPLETE_FILE_PATH);
+		orionBridge.setTestResultFileName(TEST_FILE_NAME);
+		
 		List<MessageTest> messages = new ArrayList<MessageTest> ();
-		messages.add(new MessageTest(MessageTypesEnum.PLATFORM_CREATE_DEVICE, "messagesV2/06_platform_create_device.json"));
-		messages.add(new MessageTest(MessageTypesEnum.LIST_DEVICES, "messagesV2/05_list_devices.json"));
-		messages.add(new MessageTest(MessageTypesEnum.PLATFORM_UPDATE_DEVICE, "messagesV2/08_platform_update_device.json"));
-		messages.add(new MessageTest(MessageTypesEnum.LIST_DEVICES, "messagesV2/05_list_devices.json"));
-		messages.add(new MessageTest(MessageTypesEnum.SUBSCRIBE, "messagesV2/02_susbcribe.json"));
-		//messages.add(new MessageTest(MessageTypesEnum.UNSUBSCRIBE, "messagesV2/03_unsusbcribe.json"));
-		messages.add(new MessageTest(MessageTypesEnum.PLATFORM_DELETE_DEVICE, "messagesV2/07_platform_delete_device.json"));
-		messages.add(new MessageTest(MessageTypesEnum.LIST_DEVICES, "messagesV2/05_list_devices.json"));
+		messages.add(new MessageTest(MessageTypesEnum.PLATFORM_CREATE_DEVICE, "06_platform_create_device.json"));
+		messages.add(new MessageTest(MessageTypesEnum.LIST_DEVICES, "05_list_devices.json"));
+		messages.add(new MessageTest(MessageTypesEnum.PLATFORM_UPDATE_DEVICE, "08_platform_update_device.json"));
+		messages.add(new MessageTest(MessageTypesEnum.QUERY, "04_query.json"));
+		messages.add(new MessageTest(MessageTypesEnum.SUBSCRIBE, "02_susbcribe.json"));
+		messages.add(new MessageTest(MessageTypesEnum.UNSUBSCRIBE, TEST_FILE_NAME));
+		messages.add(new MessageTest(MessageTypesEnum.PLATFORM_DELETE_DEVICE, "07_platform_delete_device.json"));
+		messages.add(new MessageTest(MessageTypesEnum.LIST_DEVICES, "05_list_devices.json"));
 		
 		//Set json fiware for test
 		//Map<MessageTypesEnum, String> mapJsons = new HashMap<MessageTypesEnum,String>();
@@ -71,16 +80,21 @@ public class ConstructMessagesTest {
 		//Iterate the Map
 		messages.forEach(entry -> {
 		    Message messageResponsePlatform = new Message();
-		    URL url = Resources.getResource(entry.getFilePath());
+		    URL url = Resources.getResource(TEST_FILE_PATH + entry.getFilePath());
 		    
 		    try{
+		    	
+		    	Scanner scanner = new Scanner(Paths.get(Paths.get(".").toAbsolutePath().normalize().toString() + "/" + TEST_COMPLETE_FILE_PATH + entry.getFilePath()), StandardCharsets.UTF_8.name());
+		    	String fileContent = scanner.useDelimiter("\\A").next();
+		    	scanner.close();
+		    	
 			    if(!Resources.toString(url, Charsets.UTF_8).contains("@graph")){
 			    	//Generate Metadata for MessageResponse
 				    OrionV2Utils.generatePlatformMetadaToMessageResponse(messageResponsePlatform, entry.getMessageType(), platformId);
 					
 					try {
 						//Generate Payload for MessageResponse
-						generatePayloadToMessageResponse(messageResponsePlatform, BASE_PATH, Resources.toString(url, Charsets.UTF_8), idsTransformation);
+						generatePayloadToMessageResponse(messageResponsePlatform, BASE_PATH, fileContent);
 						System.out.println("---- Printing " + entry.getFilePath() + " ----");
 						System.out.println(messageResponsePlatform.serializeToJSONLD());
 					} catch (UnsupportedOperationException | IOException e) {
@@ -124,12 +138,17 @@ public class ConstructMessagesTest {
 	class MessageTest{
 		MessageTypesEnum messageType;
 		String filePath = null;
-		boolean manageId;
+		String responseFilePath;
+		
 		
 		MessageTest(MessageTypesEnum messageType, String filePath){
+			this(messageType, filePath, null);
+		}
+		
+		MessageTest(MessageTypesEnum messageType, String filePath, String responseFilePath){
 			this.messageType = messageType;
 			this.filePath = filePath;
-			this.manageId = manageId;
+			this.responseFilePath = responseFilePath;
 		}
 
 		public MessageTypesEnum getMessageType() {
@@ -147,14 +166,7 @@ public class ConstructMessagesTest {
 		public void setFilePath(String filePath) {
 			this.filePath = filePath;
 		}
-
-		public boolean isManageId() {
-			return manageId;
-		}
-
-		public void setManageId(boolean manageId) {
-			this.manageId = manageId;
-		}		
+		
 	}
 	
 	/**
@@ -164,22 +176,12 @@ public class ConstructMessagesTest {
 	 * @throws UnsupportedOperationException
 	 * @throws IOException
 	 */
-	public static void generatePayloadToMessageResponse(Message messageResponse, String BASE_PATH, String responseBody, boolean manageId) throws UnsupportedOperationException, IOException {
+	public static void generatePayloadToMessageResponse(Message messageResponse, String BASE_PATH, String responseBody) throws UnsupportedOperationException, IOException {
 		FIWAREv2Translator translator = new FIWAREv2Translator();
 		// Create the model from the response JSON
-		Model translatedModel = translator.toJenaModel(responseBody);
-		MessagePayload responsePayload = null;
-		if(manageId){
-			// Transform the message ids
-			SimpleIdTransformer transformer = new SimpleIdTransformer();
-			Model transformedModel = transformer.transformTowardsINTERMW(translatedModel);
-			// Create a new message payload for the response message
-			responsePayload = new MessagePayload(transformedModel);
-		}
-		else{
-			// Create a new message payload for the response message
-			responsePayload = new MessagePayload(translatedModel);
-		}		
+		Model translatedModel = translator.toJenaModel(responseBody);		
+		// Create a new message payload for the response message
+		MessagePayload responsePayload = new MessagePayload(translatedModel);				
 		// Attach the payload to the message
 		messageResponse.setPayload(responsePayload);
     }

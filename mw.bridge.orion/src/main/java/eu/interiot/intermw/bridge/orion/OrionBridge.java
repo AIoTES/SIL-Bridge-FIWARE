@@ -18,6 +18,11 @@
  */
 package eu.interiot.intermw.bridge.orion;
 
+import java.io.FileOutputStream;
+import java.io.OutputStream;
+import java.nio.file.Files;
+import java.nio.file.Paths;
+import java.nio.file.StandardOpenOption;
 import java.util.Set;
 
 import org.apache.jena.rdf.model.Model;
@@ -42,6 +47,10 @@ public class OrionBridge extends AbstractBridge {
 	private String callbackAddres;
 
 	private final Logger logger = LoggerFactory.getLogger(OrionBridge.class);
+	
+	protected boolean testMode = false;
+	protected String testResultFilePath;
+	protected String testResultFileName;
 
 	public OrionBridge(Configuration configuration, Platform platform) throws MiddlewareException {
 		super(configuration, platform);
@@ -84,7 +93,7 @@ public class OrionBridge extends AbstractBridge {
 			FIWAREv2Translator translator = new FIWAREv2Translator();
 			String body = translator.toFormatX(message.getPayload().getJenaModel());
 			String responseBody = OrionV2Utils.registerEntity(BASE_PATH, body);			
-			logger.info("Device/s {} has/have been created.", OrionV2Utils.getDeviceIds(message));
+			logger.info("Device/s {} has/have been created.", OrionV2Utils.getPlatformIds(message));
 			// Get the Model from the response
 			Model translatedModel = translator.toJenaModel(responseBody);			
 			// Create a new message payload for the response message
@@ -108,7 +117,7 @@ public class OrionBridge extends AbstractBridge {
 		try {
 			logger.info("Removing devices...");
 			//Set<String> deviceIds = OrionV2Utils.getEntityIds(message);
-			Set<String> deviceIds = OrionV2Utils.getDeviceIds(message);
+			Set<String> deviceIds = OrionV2Utils.getPlatformIds(message);
 			for(String deviceId : deviceIds){
 				String transformedId = OrionV2Utils.filterThingID(deviceId);
 				String responseBody = OrionV2Utils.unregisterEntity(BASE_PATH, transformedId);
@@ -140,7 +149,7 @@ public class OrionBridge extends AbstractBridge {
 		Message responseMessage = MessageUtils.createResponseMessage(message);
 		logger.info("Updating devices...");
 		//Set<String> deviceIds = OrionV2Utils.getEntityIds(message);
-		Set<String> deviceIds = OrionV2Utils.getDeviceIds(message);
+		Set<String> deviceIds = OrionV2Utils.getPlatformIds(message);
 		for(String deviceId : deviceIds){
 			try {
 				FIWAREv2Translator translator = new FIWAREv2Translator();
@@ -195,7 +204,7 @@ public class OrionBridge extends AbstractBridge {
 	public Message query(Message message) {
 		Message responseMessage = MessageUtils.createResponseMessage(message);
 		try{
-			Set<String> deviceIds = OrionV2Utils.getEntityIds(message);
+			Set<String> deviceIds = OrionV2Utils.getPlatformIds(message);
 			for(String deviceId : deviceIds){
 				String responseBody = OrionV2Utils.queryEntityById(BASE_PATH, deviceId);
 				logger.info(responseBody);	
@@ -298,6 +307,13 @@ public class OrionBridge extends AbstractBridge {
 			responseMessage.setPayload(responsePayload);
 			// Set OK status
 			responseMessage.getMetadata().setStatus("OK");
+			// If test, save the subscription id in order to be able to unsubscribe
+			if(testMode && testResultFilePath != null && testResultFileName != null){
+				OutputStream os = new FileOutputStream(Paths.get(Paths.get(".").toAbsolutePath().normalize().toString() + "/" + testResultFilePath + testResultFileName).toString());
+				os.write(responseBody.getBytes());
+				os.flush();
+				os.close();
+			}
 		}
 		catch (Exception e){ 
 			logger.error("Error subscribing: " + e.getMessage());
@@ -312,7 +328,7 @@ public class OrionBridge extends AbstractBridge {
 	public Message unsubscribe(Message message) {
 		Message responseMessage = MessageUtils.createResponseMessage(message);
 		try{
-			Set<String> entityIds = OrionV2Utils.getEntityIds(message);
+			Set<String> entityIds = OrionV2Utils.getPlatformIds(message);
 			for (String entityId : entityIds) {
 				logger.info("Unsubscribing {}...", entityId);
 				String responseBody = OrionV2Utils.removeSubscription(BASE_PATH, entityId);
@@ -334,4 +350,29 @@ public class OrionBridge extends AbstractBridge {
 		}
 		return responseMessage;
 	}
+
+	public boolean isTestMode() {
+		return testMode;
+	}
+
+	public void setTestMode(boolean testMode) {
+		this.testMode = testMode;
+	}
+
+	public String getTestResultFilePath() {
+		return testResultFilePath;
+	}
+
+	public void setTestResultFilePath(String testResultFilePath) {
+		this.testResultFilePath = testResultFilePath;
+	}
+
+	public String getTestResultFileName() {
+		return testResultFileName;
+	}
+
+	public void setTestResultFileName(String testResultFileName) {
+		this.testResultFileName = testResultFileName;
+	}
+	
 }

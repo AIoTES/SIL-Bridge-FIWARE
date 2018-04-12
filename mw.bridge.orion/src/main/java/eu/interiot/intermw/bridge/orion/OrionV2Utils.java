@@ -65,7 +65,7 @@ public class OrionV2Utils {
     //post
     private static final String FIWARE_ENTITY_SUBSCRIBE = "/v2/subscriptions";
     //remove {subscriptionId}
-    private static final String FIWARE_ENTITY_UNSUBSCRIBE = "/v2/subscriptions/";
+    private static final String FIWARE_ENTITY_UNSUBSCRIBE = "/v2/subscriptions";
     
     // Types
     public static final String EntityTypeDevice = FIWAREv2Translator.FIWAREbaseURI + "Entity";
@@ -273,7 +273,7 @@ public class OrionV2Utils {
     	JsonObject jsonObjectFinal = new JsonObject();
     	String[] locationSplit = responseBody.split("/");
     	String location = locationSplit[locationSplit.length-1];
-    	jsonObjectFinal.addProperty("subscriptionId", location);
+    	jsonObjectFinal.addProperty("id", location);
     	return jsonObjectFinal.toString();
     }
     
@@ -325,7 +325,7 @@ public class OrionV2Utils {
         return names;
     }
     
-    public static Set<String> getDeviceIds(Message message){
+    public static Set<String> getPlatformIds(Message message){
 		Set<EntityID> entityIds = getEntityIDsFromPayloadAsEntityIDSet(message.getPayload(), EntityTypeDevice);
 		Set<String> deviceIds = new HashSet<>();
 		for (EntityID entityId : entityIds) {
