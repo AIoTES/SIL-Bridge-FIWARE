@@ -20,9 +20,7 @@ package eu.interiot.intermw.bridge.orion;
 
 import java.io.FileOutputStream;
 import java.io.OutputStream;
-import java.nio.file.Files;
 import java.nio.file.Paths;
-import java.nio.file.StandardOpenOption;
 import java.util.Set;
 
 import org.apache.jena.rdf.model.Model;

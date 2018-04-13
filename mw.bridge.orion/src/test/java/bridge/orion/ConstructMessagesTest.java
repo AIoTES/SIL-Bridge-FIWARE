@@ -40,7 +40,6 @@ public class ConstructMessagesTest {
 	String BASE_PATH;
 	String platformId;
 	
-	protected boolean idsTransformation = false;
 	protected final String TEST_FILE_PATH = "messagesV2/";
 	protected final String TEST_COMPLETE_FILE_PATH = "src/test/resources/" + TEST_FILE_PATH;
 	protected final String TEST_FILE_NAME = "tmp_response_file.json";
@@ -110,9 +109,8 @@ public class ConstructMessagesTest {
 			    }
 			    // It is already a JSON-LD FIWARE message
 			    else{
-			    	String platformJson = Resources.toString(url, Charsets.UTF_8);
-					System.out.println(platformJson);
-					Message platformMsg = new Message(platformJson);
+					System.out.println(fileContent);
+					Message platformMsg = new Message(fileContent);
 					orionBridge.send(platformMsg);
 			    }
 		    }
