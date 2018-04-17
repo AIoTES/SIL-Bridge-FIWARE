@@ -416,7 +416,7 @@ public class OrionBridge extends AbstractBridge {
 	         System.out.println(callbackMessage.serializeToJSONLD());
 	
 	         // Send to InterIoT
-	         //publisher.publish(callbackMessage);
+	         publisher.publish(callbackMessage);
          }
          catch(Exception e){
         	 return "500-KO";
