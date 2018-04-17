@@ -66,16 +66,7 @@ public class ConstructMessagesTest {
 		messages.add(new MessageTest(MessageTypesEnum.UNSUBSCRIBE, TEST_FILE_NAME));
 		messages.add(new MessageTest(MessageTypesEnum.PLATFORM_DELETE_DEVICE, "07_platform_delete_device.json"));
 		messages.add(new MessageTest(MessageTypesEnum.LIST_DEVICES, "05_list_devices.json"));
-		
-		//Set json fiware for test
-		//Map<MessageTypesEnum, String> mapJsons = new HashMap<MessageTypesEnum,String>();
-		//mapJsons.put(MessageTypesEnum.PLATFORM_REGISTER, "messagesV2/00_platform_register.json");
-		//mapJsons.put(MessageTypesEnum.PLATFORM_UNREGISTER, "messagesV2/01_platform_unregister.json");
-		//mapJsons.put(MessageTypesEnum.QUERY, "messagesV2/04_query.json");
-		//mapJsons.put(MessageTypesEnum.OBSERVATION, "messagesV2/09_observation.json");
-		//mapJsons.put(MessageTypesEnum.ACTUATION, "messagesV2/10_actuation.json");
-		//mapJsons.put(MessageTypesEnum.ERROR, "messagesV2/11_error.json");
-		
+				
 		//Iterate the Map
 		messages.forEach(entry -> {
 		    Message messageResponsePlatform = new Message();

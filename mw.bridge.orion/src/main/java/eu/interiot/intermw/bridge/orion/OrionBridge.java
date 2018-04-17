@@ -18,6 +18,9 @@
  */
 package eu.interiot.intermw.bridge.orion;
 
+import static spark.Spark.get;
+import static spark.Spark.post;
+
 import java.io.FileOutputStream;
 import java.io.OutputStream;
 import java.nio.file.Paths;
@@ -32,17 +35,23 @@ import eu.interiot.intermw.commons.exceptions.MiddlewareException;
 import eu.interiot.intermw.commons.interfaces.Configuration;
 import eu.interiot.intermw.commons.model.Platform;
 import eu.interiot.message.Message;
+import eu.interiot.message.MessageMetadata;
 import eu.interiot.message.MessagePayload;
+import eu.interiot.message.ID.EntityID;
+import eu.interiot.message.managers.URI.URIManagerMessageMetadata;
 import eu.interiot.message.managers.URI.URIManagerMessageMetadata.MessageTypesEnum;
+import eu.interiot.message.metadata.PlatformMessageMetadata;
 import eu.interiot.message.utils.MessageUtils;
 import eu.interiot.translators.syntax.FIWARE.FIWAREv2Translator;
+import spark.Request;
 
 @eu.interiot.intermw.bridge.annotations.Bridge(platformType = "FIWARE")
 public class OrionBridge extends AbstractBridge {
 
 	private final static String PROPERTIES_PREFIX = "orion-";
 	private final String BASE_PATH;
-	private String callbackAddres;
+	private String callbackAddress;
+	private String bridgeSubscriptionsCallbackAddress;
 
 	private final Logger logger = LoggerFactory.getLogger(OrionBridge.class);
 	
@@ -53,8 +62,13 @@ public class OrionBridge extends AbstractBridge {
 	public OrionBridge(Configuration configuration, Platform platform) throws MiddlewareException {
 		super(configuration, platform);
 		BASE_PATH = configuration.getProperty(PROPERTIES_PREFIX + "base-path");
-		callbackAddres = configuration.getProperty(PROPERTIES_PREFIX + "callback-address");
-
+		callbackAddress = configuration.getProperty("bridge.callback.address");
+		bridgeSubscriptionsCallbackAddress = callbackAddress.concat(configuration.getProperty("bridge.callback.subscription.context"));
+		
+		// Raise the server
+		String callbackAddress = configuration.getProperty("bridge.callback.subscription.context");
+		get(callbackAddress, (req, res) -> testServerGet(req));
+		post(callbackAddress,(req, res) -> publishObservationToIntermw(req));
 	}
 	
 	@Override
@@ -293,8 +307,10 @@ public class OrionBridge extends AbstractBridge {
 			FIWAREv2Translator translator = new FIWAREv2Translator();
 			// Translate the message into Fiware JSON
 			String requestBody = translator.toFormatX(message.getPayload().getJenaModel());
-			// Add the callback address to the body 
-			//requestBody = OrionV2Utils.buildJsonWithUrl(requestBody, callbackAddres);
+												
+			// Change the message callback address of the body for the address where the bridge is listening after a subscription 
+			requestBody = OrionV2Utils.buildJsonWithUrl(requestBody, bridgeSubscriptionsCallbackAddress);
+			
 			// Create the subscription
 			String responseBody = OrionV2Utils.createSubscription(BASE_PATH, requestBody);
 			// Get the Model from the response
@@ -373,4 +389,38 @@ public class OrionBridge extends AbstractBridge {
 		this.testResultFileName = testResultFileName;
 	}
 	
+	private String testServerGet(Request req){
+		logger.info("Petición get recibida");
+		return "Petición get recibida";
+	}
+		
+	private String publishObservationToIntermw(Request req){
+		 Message callbackMessage = new Message();
+         try{
+			 // Metadata
+	         PlatformMessageMetadata metadata = new MessageMetadata().asPlatformMessageMetadata();
+	         metadata.initializeMetadata();
+	         metadata.addMessageType(URIManagerMessageMetadata.MessageTypesEnum.OBSERVATION);
+	         metadata.addMessageType(URIManagerMessageMetadata.MessageTypesEnum.RESPONSE);
+	         metadata.setSenderPlatformId(new EntityID(platform.getId().getId()));
+	         callbackMessage.setMetadata(metadata);
+	         
+	         String body = req.body();
+	         FIWAREv2Translator translator = new FIWAREv2Translator();
+	         Model transformedModel = translator.toJenaModelTransformed(body);
+	
+	         //Finish creating the message
+	         MessagePayload messagePayload = new MessagePayload(transformedModel);
+	         callbackMessage.setPayload(messagePayload);
+	         
+	         System.out.println(callbackMessage.serializeToJSONLD());
+	
+	         // Send to InterIoT
+	         //publisher.publish(callbackMessage);
+         }
+         catch(Exception e){
+        	 return "500-KO";
+         }
+         return "200-OK";
+	}
 }
