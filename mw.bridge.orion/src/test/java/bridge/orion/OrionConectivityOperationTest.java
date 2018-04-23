@@ -26,10 +26,6 @@ import java.util.logging.Handler;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-import eu.interiot.intermw.commons.model.*;
-import eu.interiot.intermw.commons.model.PlatformType;
-import org.interiot.fiware.ngsiv2.client.ApiException;
-import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -45,11 +41,15 @@ import com.spotify.docker.client.messages.Image;
 import com.spotify.docker.client.messages.PortBinding;
 
 import eu.interiot.intermw.bridge.Context;
-import eu.interiot.intermw.bridge.exceptions.BridgeException;
 import eu.interiot.intermw.bridge.orion.OrionBridge;
-import eu.interiot.intermw.bridge.orion.OrionQuery;
 import eu.interiot.intermw.commons.exceptions.ContextException;
 import eu.interiot.intermw.commons.exceptions.MiddlewareException;
+import eu.interiot.intermw.commons.model.Platform;
+import eu.interiot.intermw.commons.model.PlatformId;
+import eu.interiot.intermw.commons.model.PlatformType;
+import eu.interiot.intermw.commons.model.Thing;
+import eu.interiot.intermw.commons.model.ThingAttribute;
+import eu.interiot.intermw.commons.model.ThingId;
 
 public class OrionConectivityOperationTest {
 
@@ -275,7 +275,7 @@ public class OrionConectivityOperationTest {
 */	}
 
 	@Test
-	public void testReadThing() throws ApiException {
+	public void testReadThing() {
 //TODO FF 20.9.2017, refactor
 		/*		OrionQuery query = new OrionQuery();
 		query.setThingId(new ThingId(ID_THING_ID_1));
