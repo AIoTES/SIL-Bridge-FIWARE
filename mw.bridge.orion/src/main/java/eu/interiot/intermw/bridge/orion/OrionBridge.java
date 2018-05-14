@@ -66,7 +66,8 @@ public class OrionBridge extends AbstractBridge {
 
 	public OrionBridge(Configuration configuration, Platform platform) throws MiddlewareException {
 		super(configuration, platform);
-		BASE_PATH = configuration.getProperty(PROPERTIES_PREFIX + "base-path");
+//		BASE_PATH = configuration.getProperty(PROPERTIES_PREFIX + "base-path");
+		BASE_PATH = platform.getBaseURL(); // Get base path from the Register Platform message
 		callbackAddress = configuration.getProperty("bridge.callback.address");
 		bridgeSubscriptionsCallbackAddress = callbackAddress.concat(configuration.getProperty("bridge.callback.subscription.context"));
 		
