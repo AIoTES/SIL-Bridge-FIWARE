@@ -41,7 +41,7 @@ import eu.interiot.message.ID.EntityID;
 import eu.interiot.message.managers.URI.URIManagerMessageMetadata;
 import eu.interiot.message.managers.URI.URIManagerMessageMetadata.MessageTypesEnum;
 import eu.interiot.message.metadata.PlatformMessageMetadata;
-import eu.interiot.message.utils.MessageUtils;
+//import eu.interiot.message.utils.MessageUtils;
 import eu.interiot.translators.syntax.FIWARE.FIWAREv2Translator;
 import spark.Request;
 
@@ -73,7 +73,7 @@ public class OrionBridge extends AbstractBridge {
 	
 	@Override
 	public Message registerPlatform(Message message) {
-		Message responseMessage = MessageUtils.createResponseMessage(message);
+		Message responseMessage = createResponseMessage(message);
 		logger.info("Registering platform {}...", OrionV2Utils.getPlatformId(platform));
 		logger.info("Platform {} has been registered.", OrionV2Utils.getPlatformId(platform));
 		responseMessage.getMetadata().setStatus("OK");
@@ -83,14 +83,14 @@ public class OrionBridge extends AbstractBridge {
 	@Override
 	public Message unrecognized(Message message) {
 		logger.info("Unrecognized message type.");
-		Message responseMessage = MessageUtils.createResponseMessage(message);
+		Message responseMessage = createResponseMessage(message);
 		responseMessage.getMetadata().setStatus("OK");
 		return responseMessage;
 	}
 
 	@Override
 	public Message unregisterPlatform(Message message) {
-		Message responseMessage = MessageUtils.createResponseMessage(message);
+		Message responseMessage = createResponseMessage(message);
 		logger.info("Unregistering platform {}...", OrionV2Utils.getPlatformId(platform));
 		logger.info("Platform {} has been unregistered.", OrionV2Utils.getPlatformId(platform));
 		responseMessage.getMetadata().setStatus("OK");
@@ -99,7 +99,7 @@ public class OrionBridge extends AbstractBridge {
 		
 	@Override
 	public Message platformCreateDevice(Message message) {
-		Message responseMessage = MessageUtils.createResponseMessage(message);
+		Message responseMessage = createResponseMessage(message);
 		try {
 			logger.info("Creating devices...");
 			FIWAREv2Translator translator = new FIWAREv2Translator();
@@ -125,7 +125,7 @@ public class OrionBridge extends AbstractBridge {
 	
 	@Override
 	public Message platformDeleteDevice(Message message) {
-		Message responseMessage = MessageUtils.createResponseMessage(message);
+		Message responseMessage = createResponseMessage(message);
 		try {
 			logger.info("Removing devices...");
 			//Set<String> deviceIds = OrionV2Utils.getEntityIds(message);
@@ -158,7 +158,7 @@ public class OrionBridge extends AbstractBridge {
 	 * Overrides all existing attributes and deletes all the existing ones, so the update should contain all the current attributes
 	 */
 	public Message platformUpdateDevice(Message message) {
-		Message responseMessage = MessageUtils.createResponseMessage(message);
+		Message responseMessage = createResponseMessage(message);
 		logger.info("Updating devices...");
 		//Set<String> deviceIds = OrionV2Utils.getEntityIds(message);
 		Set<String> deviceIds = OrionV2Utils.getPlatformIds(message);
@@ -188,7 +188,7 @@ public class OrionBridge extends AbstractBridge {
 	
 	@Override
 	public Message listDevices(Message message) {
-		Message responseMessage = MessageUtils.createResponseMessage(message);
+		Message responseMessage = createResponseMessage(message);
 		try{
 			// Discover all the registered devices
 			String responseBody = OrionV2Utils.discoverEntities(BASE_PATH);
@@ -214,7 +214,7 @@ public class OrionBridge extends AbstractBridge {
 	
 	@Override
 	public Message query(Message message) {
-		Message responseMessage = MessageUtils.createResponseMessage(message);
+		Message responseMessage = createResponseMessage(message);
 		try{
 			Set<String> deviceIds = OrionV2Utils.getPlatformIds(message);
 			for(String deviceId : deviceIds){
@@ -246,7 +246,7 @@ public class OrionBridge extends AbstractBridge {
 	@SuppressWarnings("unused")
 	@Override
 	public Message actuate(Message message) {
-		Message responseMessage = MessageUtils.createResponseMessage(message);
+		Message responseMessage = createResponseMessage(message);
 		Set<String> deviceIds = OrionV2Utils.getEntityIds(message);
 		for(String deviceId : deviceIds){
 			try {
@@ -267,7 +267,7 @@ public class OrionBridge extends AbstractBridge {
 	
 	@Override
 	public Message observe(Message message) {
-		Message responseMessage = MessageUtils.createResponseMessage(message);
+		Message responseMessage = createResponseMessage(message);
 		Set<String> deviceIds = OrionV2Utils.getEntityIds(message);
 		for(String deviceId : deviceIds){
 			try {
@@ -294,7 +294,7 @@ public class OrionBridge extends AbstractBridge {
 	@Override
 	public Message error(Message message) {
 		logger.info("Error occured in {}...", message);
-		Message responseMessage = MessageUtils.createResponseMessage(message);
+		Message responseMessage = createResponseMessage(message);
 		responseMessage.getMetadata().setStatus("KO");
 		responseMessage.getMetadata().setMessageType(MessageTypesEnum.ERROR);
 		return responseMessage;
@@ -302,7 +302,7 @@ public class OrionBridge extends AbstractBridge {
 	
 	@Override
 	public Message subscribe(Message message) {
-		Message responseMessage = MessageUtils.createResponseMessage(message);
+		Message responseMessage = createResponseMessage(message);
 		try{
 			FIWAREv2Translator translator = new FIWAREv2Translator();
 			// Translate the message into Fiware JSON
@@ -340,7 +340,7 @@ public class OrionBridge extends AbstractBridge {
 
 	@Override
 	public Message unsubscribe(Message message) {
-		Message responseMessage = MessageUtils.createResponseMessage(message);
+		Message responseMessage = createResponseMessage(message);
 		try{
 			Set<String> entityIds = OrionV2Utils.getPlatformIds(message);
 			for (String entityId : entityIds) {

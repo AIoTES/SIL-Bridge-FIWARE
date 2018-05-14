@@ -84,7 +84,8 @@ public class OrionConectivityOperationTest {
 			// setUpDocker();
 		}
 		try {
-			client = new OrionBridge(Context.getConfiguration(), new Platform(new PlatformId("Test_Orion"), "Test", new PlatformType("FIWARE"), null, null));
+//			client = new OrionBridge(Context.getConfiguration(), new Platform(new PlatformId("Test_Orion"), "Test", new PlatformType("FIWARE"), null, null));
+			client = new OrionBridge(Context.getConfiguration(), new Platform(new PlatformId("http://inter-iot.eu/Test_Orion"), "Test", new PlatformType("FIWARE"), null, null));
 		} catch (MiddlewareException e) {
 			e.printStackTrace();
 		}
