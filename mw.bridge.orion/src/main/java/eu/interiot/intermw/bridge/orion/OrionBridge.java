@@ -30,6 +30,10 @@ import org.apache.jena.rdf.model.Model;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.google.gson.JsonArray;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
+
 import eu.interiot.intermw.bridge.abstracts.AbstractBridge;
 import eu.interiot.intermw.commons.exceptions.MiddlewareException;
 import eu.interiot.intermw.commons.interfaces.Configuration;
@@ -38,6 +42,7 @@ import eu.interiot.message.Message;
 import eu.interiot.message.MessageMetadata;
 import eu.interiot.message.MessagePayload;
 import eu.interiot.message.ID.EntityID;
+import eu.interiot.message.exceptions.payload.PayloadException;
 import eu.interiot.message.managers.URI.URIManagerMessageMetadata;
 import eu.interiot.message.managers.URI.URIManagerMessageMetadata.MessageTypesEnum;
 import eu.interiot.message.metadata.PlatformMessageMetadata;
@@ -306,7 +311,29 @@ public class OrionBridge extends AbstractBridge {
 		try{
 			FIWAREv2Translator translator = new FIWAREv2Translator();
 			// Translate the message into Fiware JSON
-			String requestBody = translator.toFormatX(message.getPayload().getJenaModel());
+//			String requestBody = translator.toFormatX(message.getPayload().getJenaModel());
+			
+			Set<String> entities = OrionV2Utils.getEntityIDsFromPayload(message.getPayload(), OrionV2Utils.EntityTypeSSNDevice);
+			if (entities.isEmpty()) {
+	            throw new PayloadException("No entities of type Device found in the Payload.");
+	        } else if (entities.size() > 1) {
+	            throw new PayloadException("Only one device is supported by Subscribe operation.");
+	        }
+			
+//			String thingId = OrionV2Utils.filterThingID(entities.iterator().next());
+			String thingId = entities.iterator().next();
+		    String conversationId = message.getMetadata().getConversationId().orElse(null);
+		    logger.debug("Subscribing to thing {} using conversationId {}...", thingId, conversationId);
+			
+		    JsonParser parser = new JsonParser();
+		    JsonObject subjectObject = parser.parse(OrionV2Utils.buildJsonWithIds(thingId)).getAsJsonObject();
+		    JsonObject urlObject = new JsonObject();
+		    JsonObject notificationObject = new JsonObject();
+		    notificationObject.add("http", urlObject);
+		    JsonObject subscription = new JsonObject();
+		    subscription.add("subject", subjectObject);
+		    subscription.add("notification", notificationObject);
+		    String requestBody = subscription.toString();
 												
 			// Change the message callback address of the body for the address where the bridge is listening after a subscription 
 			requestBody = OrionV2Utils.buildJsonWithUrl(requestBody, bridgeSubscriptionsCallbackAddress);

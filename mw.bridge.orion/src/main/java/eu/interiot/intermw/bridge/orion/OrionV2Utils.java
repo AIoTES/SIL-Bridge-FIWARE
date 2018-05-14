@@ -67,8 +67,11 @@ public class OrionV2Utils {
     //remove {subscriptionId}
     private static final String FIWARE_ENTITY_UNSUBSCRIBE = "/v2/subscriptions";
     
+    public static final String URIoldssn = "http://purl.oclc.org/NET/ssnx/ssn#";
+    
     // Types
     public static final String EntityTypeDevice = FIWAREv2Translator.FIWAREbaseURI + "Entity";
+    public static final String EntityTypeSSNDevice = URIoldssn + "Device";
     
     public static final String propHasIdURI = FIWAREv2Translator.FIWAREbaseURI + "hasId";
        	
