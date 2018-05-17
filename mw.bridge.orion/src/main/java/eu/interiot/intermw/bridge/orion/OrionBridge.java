@@ -30,7 +30,6 @@ import org.apache.jena.rdf.model.Model;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 
@@ -49,6 +48,7 @@ import eu.interiot.message.metadata.PlatformMessageMetadata;
 //import eu.interiot.message.utils.MessageUtils;
 import eu.interiot.translators.syntax.FIWARE.FIWAREv2Translator;
 import spark.Request;
+import spark.Spark;
 
 @eu.interiot.intermw.bridge.annotations.Bridge(platformType = "FIWARE")
 public class OrionBridge extends AbstractBridge {
@@ -74,7 +74,7 @@ public class OrionBridge extends AbstractBridge {
 		// Raise the server
 		String callbackAddress = configuration.getProperty("bridge.callback.subscription.context");
 		get(callbackAddress, (req, res) -> testServerGet(req));
-		post(callbackAddress,(req, res) -> publishObservationToIntermw(req));
+//		post(callbackAddress,(req, res) -> publishObservationToIntermw(req));
 	}
 	
 	@Override
@@ -337,7 +337,9 @@ public class OrionBridge extends AbstractBridge {
 		    String requestBody = subscription.toString();
 												
 			// Change the message callback address of the body for the address where the bridge is listening after a subscription 
-			requestBody = OrionV2Utils.buildJsonWithUrl(requestBody, bridgeSubscriptionsCallbackAddress);
+//			requestBody = OrionV2Utils.buildJsonWithUrl(requestBody, bridgeSubscriptionsCallbackAddress);
+			
+			requestBody = OrionV2Utils.buildJsonWithUrl(requestBody, callbackAddress.concat("/" + conversationId));
 			
 			// Create the subscription
 			String responseBody = OrionV2Utils.createSubscription(BASE_PATH, requestBody);
@@ -350,6 +352,38 @@ public class OrionBridge extends AbstractBridge {
 			// Set OK status
 			responseMessage.getMetadata().setStatus("OK");
 			// If test, save the subscription id in order to be able to unsubscribe
+			
+			Spark.post(conversationId, (req, response) -> { // SOFIA2 sends data using a HTTP PUT query
+				 Message callbackMessage = new Message();
+		         try{
+					 // Metadata
+			         PlatformMessageMetadata metadata = new MessageMetadata().asPlatformMessageMetadata();
+			         metadata.initializeMetadata();
+			         metadata.addMessageType(URIManagerMessageMetadata.MessageTypesEnum.OBSERVATION);
+			         metadata.addMessageType(URIManagerMessageMetadata.MessageTypesEnum.RESPONSE);
+			         metadata.setSenderPlatformId(new EntityID(platform.getId().getId()));
+			         metadata.setConversationId(conversationId);
+			         callbackMessage.setMetadata(metadata);
+			         
+			         String body = req.body();
+			         FIWAREv2Translator translator2 = new FIWAREv2Translator();
+			         Model transformedModel = translator2.toJenaModelTransformed(body);
+			
+			         //Finish creating the message
+			         MessagePayload messagePayload = new MessagePayload(transformedModel);
+			         callbackMessage.setPayload(messagePayload);
+			         
+			         System.out.println(callbackMessage.serializeToJSONLD());
+			
+			         // Send to InterIoT
+			         publisher.publish(callbackMessage);
+		         }
+		         catch(Exception e){
+		        	 return "500-KO";
+		         }
+		         return "200-OK";
+	        });
+			
 			if(testMode && testResultFilePath != null && testResultFileName != null){
 				OutputStream os = new FileOutputStream(Paths.get(Paths.get(".").toAbsolutePath().normalize().toString() + "/" + testResultFilePath + testResultFileName).toString());
 				os.write(responseBody.getBytes());
@@ -422,33 +456,34 @@ public class OrionBridge extends AbstractBridge {
 		return "Petición get recibida";
 	}
 		
-	private String publishObservationToIntermw(Request req){
-		 Message callbackMessage = new Message();
-         try{
-			 // Metadata
-	         PlatformMessageMetadata metadata = new MessageMetadata().asPlatformMessageMetadata();
-	         metadata.initializeMetadata();
-	         metadata.addMessageType(URIManagerMessageMetadata.MessageTypesEnum.OBSERVATION);
-	         metadata.addMessageType(URIManagerMessageMetadata.MessageTypesEnum.RESPONSE);
-	         metadata.setSenderPlatformId(new EntityID(platform.getId().getId()));
-	         callbackMessage.setMetadata(metadata);
-	         
-	         String body = req.body();
-	         FIWAREv2Translator translator = new FIWAREv2Translator();
-	         Model transformedModel = translator.toJenaModelTransformed(body);
-	
-	         //Finish creating the message
-	         MessagePayload messagePayload = new MessagePayload(transformedModel);
-	         callbackMessage.setPayload(messagePayload);
-	         
-	         System.out.println(callbackMessage.serializeToJSONLD());
-	
-	         // Send to InterIoT
-	         publisher.publish(callbackMessage);
-         }
-         catch(Exception e){
-        	 return "500-KO";
-         }
-         return "200-OK";
-	}
+//	private String publishObservationToIntermw(Request req){
+//		 Message callbackMessage = new Message();
+//         try{
+//			 // Metadata
+//	         PlatformMessageMetadata metadata = new MessageMetadata().asPlatformMessageMetadata();
+//	         metadata.initializeMetadata();
+//	         metadata.addMessageType(URIManagerMessageMetadata.MessageTypesEnum.OBSERVATION);
+//	         metadata.addMessageType(URIManagerMessageMetadata.MessageTypesEnum.RESPONSE);
+//	         metadata.setSenderPlatformId(new EntityID(platform.getId().getId()));
+//	         metadata.setConversationId(conversationId);
+//	         callbackMessage.setMetadata(metadata);
+//	         
+//	         String body = req.body();
+//	         FIWAREv2Translator translator = new FIWAREv2Translator();
+//	         Model transformedModel = translator.toJenaModelTransformed(body);
+//	
+//	         //Finish creating the message
+//	         MessagePayload messagePayload = new MessagePayload(transformedModel);
+//	         callbackMessage.setPayload(messagePayload);
+//	         
+//	         System.out.println(callbackMessage.serializeToJSONLD());
+//	
+//	         // Send to InterIoT
+//	         publisher.publish(callbackMessage);
+//         }
+//         catch(Exception e){
+//        	 return "500-KO";
+//         }
+//         return "200-OK";
+//	}
 }
