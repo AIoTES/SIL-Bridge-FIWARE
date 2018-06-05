@@ -291,7 +291,8 @@ public class OrionV2Utils {
     }
     
     public static String getPlatformId(Platform platform){
-		return platform.getId().getId();
+//		return platform.getId().getId();
+		return platform.getPlatformId();
 	}
     
     public static Set<String> getEntityIDsFromPayload(MessagePayload payload, String entityType) {

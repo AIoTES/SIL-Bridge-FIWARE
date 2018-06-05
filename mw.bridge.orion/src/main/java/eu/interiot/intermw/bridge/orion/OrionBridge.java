@@ -24,6 +24,7 @@ import static spark.Spark.post;
 import java.io.FileOutputStream;
 import java.io.OutputStream;
 import java.nio.file.Paths;
+import java.util.List;
 import java.util.Set;
 
 import org.apache.jena.rdf.model.Model;
@@ -36,7 +37,10 @@ import com.google.gson.JsonParser;
 import eu.interiot.intermw.bridge.abstracts.AbstractBridge;
 import eu.interiot.intermw.commons.exceptions.MiddlewareException;
 import eu.interiot.intermw.commons.interfaces.Configuration;
+import eu.interiot.intermw.commons.model.IoTDevice;
 import eu.interiot.intermw.commons.model.Platform;
+import eu.interiot.intermw.commons.requests.PlatformCreateDeviceReq;
+import eu.interiot.intermw.commons.requests.SubscribeReq;
 import eu.interiot.message.Message;
 import eu.interiot.message.MessageMetadata;
 import eu.interiot.message.MessagePayload;
@@ -50,7 +54,8 @@ import eu.interiot.translators.syntax.FIWARE.FIWAREv2Translator;
 import spark.Request;
 import spark.Spark;
 
-@eu.interiot.intermw.bridge.annotations.Bridge(platformType = "FIWARE")
+//@eu.interiot.intermw.bridge.annotations.Bridge(platformType = "FIWARE")
+@eu.interiot.intermw.bridge.annotations.Bridge(platformType = "http://inter-iot.eu/FIWARE")
 public class OrionBridge extends AbstractBridge {
 
 	private final static String PROPERTIES_PREFIX = "orion-";
@@ -67,9 +72,11 @@ public class OrionBridge extends AbstractBridge {
 	public OrionBridge(Configuration configuration, Platform platform) throws MiddlewareException {
 		super(configuration, platform);
 //		BASE_PATH = configuration.getProperty(PROPERTIES_PREFIX + "base-path");
-		BASE_PATH = platform.getBaseURL(); // Get base path from the Register Platform message
-		callbackAddress = configuration.getProperty("bridge.callback.address");
-		bridgeSubscriptionsCallbackAddress = callbackAddress.concat(configuration.getProperty("bridge.callback.subscription.context"));
+//		BASE_PATH = platform.getBaseURL(); // Get base path from the Register Platform message
+		BASE_PATH = platform.getBaseEndpoint().toString();
+//		callbackAddress = configuration.getProperty("bridge.callback.address");
+		callbackAddress = configuration.getProperty(PROPERTIES_PREFIX + "callback-address");
+//		bridgeSubscriptionsCallbackAddress = callbackAddress.concat(configuration.getProperty("bridge.callback.subscription.context"));
 		
 		// Raise the server
 		String callbackAddress = configuration.getProperty("bridge.callback.subscription.context");
@@ -104,20 +111,36 @@ public class OrionBridge extends AbstractBridge {
 	}
 		
 	@Override
-	public Message platformCreateDevice(Message message) {
+	public Message platformCreateDevices(Message message) {
 		Message responseMessage = createResponseMessage(message);
 		try {
 			logger.info("Creating devices...");
 			FIWAREv2Translator translator = new FIWAREv2Translator();
-			String body = translator.toFormatX(message.getPayload().getJenaModel());
-			String responseBody = OrionV2Utils.registerEntity(BASE_PATH, body);			
+//			String body = translator.toFormatX(message.getPayload().getJenaModel());
+			
+			PlatformCreateDeviceReq req = new PlatformCreateDeviceReq(message);
+			// TODO: FIND A BETTER WAY TO DO THIS
+			for (IoTDevice iotDevice : req.getDevices()) {
+	            logger.debug("Sending create-device (start-to-manage) request to the platform for device {}...", iotDevice.getDeviceId());
+	            
+	            String thingId = iotDevice.getDeviceId();
+			    String transformedID = OrionV2Utils.filterThingID(thingId);
+	        	
+	        	JsonObject deviceObject = new JsonObject(); 
+	        	deviceObject.addProperty("id", transformedID);
+	        	deviceObject.addProperty("type", "device"); // TODO: CHANGE THIS. The message does not contain entity type information
+	            OrionV2Utils.registerEntity(BASE_PATH, deviceObject.toString());
+	        }
+			
+			
+//			String responseBody = OrionV2Utils.registerEntity(BASE_PATH, body);			
 			logger.info("Device/s {} has/have been created.", OrionV2Utils.getPlatformIds(message));
 			// Get the Model from the response
-			Model translatedModel = translator.toJenaModel(responseBody);			
+//			Model translatedModel = translator.toJenaModel(responseBody);			
 			// Create a new message payload for the response message
-			MessagePayload responsePayload = new MessagePayload(translatedModel);
+//			MessagePayload responsePayload = new MessagePayload(translatedModel);
 			// Attach the payload to the message
-			responseMessage.setPayload(responsePayload);
+//			responseMessage.setPayload(responsePayload);
 			responseMessage.getMetadata().setStatus("OK");
 		} 
 		catch (Exception e) {
@@ -130,7 +153,7 @@ public class OrionBridge extends AbstractBridge {
 	}
 	
 	@Override
-	public Message platformDeleteDevice(Message message) {
+	public Message platformDeleteDevices(Message message) {
 		Message responseMessage = createResponseMessage(message);
 		try {
 			logger.info("Removing devices...");
@@ -163,7 +186,7 @@ public class OrionBridge extends AbstractBridge {
 	/**
 	 * Overrides all existing attributes and deletes all the existing ones, so the update should contain all the current attributes
 	 */
-	public Message platformUpdateDevice(Message message) {
+	public Message platformUpdateDevices(Message message) {
 		Message responseMessage = createResponseMessage(message);
 		logger.info("Updating devices...");
 		//Set<String> deviceIds = OrionV2Utils.getEntityIds(message);
@@ -314,7 +337,12 @@ public class OrionBridge extends AbstractBridge {
 			// Translate the message into Fiware JSON
 //			String requestBody = translator.toFormatX(message.getPayload().getJenaModel());
 			
-			Set<String> entities = OrionV2Utils.getEntityIDsFromPayload(message.getPayload(), OrionV2Utils.EntityTypeSSNDevice);
+//			Set<String> entities = OrionV2Utils.getEntityIDsFromPayload(message.getPayload(), OrionV2Utils.EntityTypeSSNDevice);
+			
+			List<String> entities;
+			SubscribeReq subsreq = new SubscribeReq(message);
+			entities = subsreq.getDeviceIds();
+			
 			if (entities.isEmpty()) {
 	            throw new PayloadException("No entities of type Device found in the Payload.");
 	        } else if (entities.size() > 1) {
@@ -361,7 +389,8 @@ public class OrionBridge extends AbstractBridge {
 			         metadata.initializeMetadata();
 			         metadata.addMessageType(URIManagerMessageMetadata.MessageTypesEnum.OBSERVATION);
 			         metadata.addMessageType(URIManagerMessageMetadata.MessageTypesEnum.RESPONSE);
-			         metadata.setSenderPlatformId(new EntityID(platform.getId().getId()));
+//			         metadata.setSenderPlatformId(new EntityID(platform.getId().getId()));
+			         metadata.setSenderPlatformId(new EntityID(platform.getPlatformId()));
 			         metadata.setConversationId(conversationId);
 			         callbackMessage.setMetadata(metadata);
 			         

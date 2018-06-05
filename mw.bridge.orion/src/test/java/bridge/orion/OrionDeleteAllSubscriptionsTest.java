@@ -1,11 +1,11 @@
 package bridge.orion;
 
-import eu.interiot.intermw.bridge.Context;
+//import eu.interiot.intermw.bridge.Context;
 import eu.interiot.intermw.bridge.orion.OrionBridge;
 import eu.interiot.intermw.commons.exceptions.MiddlewareException;
 import eu.interiot.intermw.commons.model.Platform;
-import eu.interiot.intermw.commons.model.PlatformId;
-import eu.interiot.intermw.commons.model.PlatformType;
+//import eu.interiot.intermw.commons.model.PlatformId;
+//import eu.interiot.intermw.commons.model.PlatformType;
 
 public class OrionDeleteAllSubscriptionsTest {
 

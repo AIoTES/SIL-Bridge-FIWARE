@@ -18,123 +18,122 @@
  */
 package bridge.orion;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.logging.ConsoleHandler;
-import java.util.logging.Handler;
-import java.util.logging.Level;
-import java.util.logging.Logger;
+//import java.util.ArrayList;
+//import java.util.Arrays;
+//import java.util.List;
+//import java.util.logging.ConsoleHandler;
+//import java.util.logging.Handler;
+//import java.util.logging.Level;
+//import java.util.logging.Logger;
 
-import org.junit.Before;
-import org.junit.Test;
+//import org.junit.Before;
+//import org.junit.Test;
 
-import com.google.common.collect.ImmutableMap;
-import com.spotify.docker.client.DefaultDockerClient;
-import com.spotify.docker.client.DockerClient;
-import com.spotify.docker.client.DockerClient.ListContainersParam;
-import com.spotify.docker.client.DockerException;
-import com.spotify.docker.client.messages.Container;
-import com.spotify.docker.client.messages.ContainerConfig;
-import com.spotify.docker.client.messages.HostConfig;
-import com.spotify.docker.client.messages.Image;
-import com.spotify.docker.client.messages.PortBinding;
+//import com.google.common.collect.ImmutableMap;
+//import com.spotify.docker.client.DefaultDockerClient;
+//import com.spotify.docker.client.DockerClient;
+//import com.spotify.docker.client.DockerClient.ListContainersParam;
+//import com.spotify.docker.client.DockerException;
+//import com.spotify.docker.client.messages.Container;
+//import com.spotify.docker.client.messages.ContainerConfig;
+//import com.spotify.docker.client.messages.HostConfig;
+//import com.spotify.docker.client.messages.Image;
+//import com.spotify.docker.client.messages.PortBinding;
 
-import eu.interiot.intermw.bridge.Context;
-import eu.interiot.intermw.bridge.orion.OrionBridge;
-import eu.interiot.intermw.commons.exceptions.ContextException;
-import eu.interiot.intermw.commons.exceptions.MiddlewareException;
-import eu.interiot.intermw.commons.model.Platform;
-import eu.interiot.intermw.commons.model.PlatformId;
-import eu.interiot.intermw.commons.model.PlatformType;
-import eu.interiot.intermw.commons.model.Thing;
-import eu.interiot.intermw.commons.model.ThingAttribute;
-import eu.interiot.intermw.commons.model.ThingId;
+//import eu.interiot.intermw.bridge.Context;
+//import eu.interiot.intermw.bridge.orion.OrionBridge;
+//import eu.interiot.intermw.commons.exceptions.ContextException;
+//import eu.interiot.intermw.commons.exceptions.MiddlewareException;
+//import eu.interiot.intermw.commons.model.Platform;
+//import eu.interiot.intermw.commons.model.PlatformId;
+//import eu.interiot.intermw.commons.model.PlatformType;
+//import eu.interiot.intermw.commons.model.Thing;
+//import eu.interiot.intermw.commons.model.ThingAttribute;
+//import eu.interiot.intermw.commons.model.ThingId;
 
-public class OrionConectivityOperationTest {
+//public class OrionConectivityOperationTest {
 
-	private final String ATTR_KEY_1 = "attr1";
-	private final String ATTR_KEY_2 = "attr2";
-	private final String ATTR_VALUE_1 = "attrvalue1";
-	private final String ATTR_VALUE_2 = "attrvalue2";
+//	private final String ATTR_KEY_1 = "attr1";
+//	private final String ATTR_KEY_2 = "attr2";
+//	private final String ATTR_VALUE_1 = "attrvalue1";
+//	private final String ATTR_VALUE_2 = "attrvalue2";
 
-	private final String ID_THING_ID_1 = "+Thing_ID_1";
-	private final String PROP_TYPE = "type";
-	private final String ATTR_TYPE_TEXT = "Text";
-	private final String THING_TYPE_1 = "idonthavetype";
+//	private final String ID_THING_ID_1 = "+Thing_ID_1";
+//	private final String PROP_TYPE = "type";
+//	private final String ATTR_TYPE_TEXT = "Text";
+//	private final String THING_TYPE_1 = "idonthavetype";
 
-	private OrionBridge client;
-	private Thing thing;
+//	private OrionBridge client;
+//	private Thing thing;
 
-	private final String FIWARE_IMAGE = "fiware/orion:latest";
-	private final String ORION_NAME = "orion-test-container";
-	private final String MONGO_IMAGE = "mongo:3.2";
-	private final String MONGO_NAME = "mongo-test-container";
-	private Logger log = Logger.getLogger(this.getClass().getSimpleName());
-	private Handler consoleHandler = new ConsoleHandler();
+//	private final String FIWARE_IMAGE = "fiware/orion:latest";
+//	private final String ORION_NAME = "orion-test-container";
+//	private final String MONGO_IMAGE = "mongo:3.2";
+//	private final String MONGO_NAME = "mongo-test-container";
+//	private Logger log = Logger.getLogger(this.getClass().getSimpleName());
+//	private Handler consoleHandler = new ConsoleHandler();
 
 	// Control only executed once
-	private static boolean first = true;
+//	private static boolean first = true;
 
-	@Before
-	public void createAssets() throws ContextException {
+//	@Before
+//	public void createAssets() throws ContextException {
 
-		if (first) {
-			// setupLog();
-			// setUpDocker();
-		}
-		try {
-//			client = new OrionBridge(Context.getConfiguration(), new Platform(new PlatformId("Test_Orion"), "Test", new PlatformType("FIWARE"), null, null));
-			client = new OrionBridge(Context.getConfiguration(), new Platform(new PlatformId("http://inter-iot.eu/Test_Orion"), "Test", new PlatformType("FIWARE"), null, null));
-		} catch (MiddlewareException e) {
-			e.printStackTrace();
-		}
+//		if (first) {
+//			// setupLog();
+//			// setUpDocker();
+//		}
+//		try {
+//			client = new OrionBridge(Context.getConfiguration(), new Platform(new PlatformId("http://inter-iot.eu/Test_Orion"), "Test", new PlatformType("FIWARE"), null, null));
+//		} catch (MiddlewareException e) {
+//			e.printStackTrace();
+//		}
 
-		thing = new Thing(new ThingId(ID_THING_ID_1));
+//		thing = new Thing(new ThingId(ID_THING_ID_1));
 
-		ThingAttribute attr = createThingAttribute(PROP_TYPE, THING_TYPE_1, ATTR_TYPE_TEXT);
-		thing.put(attr);
+//		ThingAttribute attr = createThingAttribute(PROP_TYPE, THING_TYPE_1, ATTR_TYPE_TEXT);
+//		thing.put(attr);
 
-		ThingAttribute attr1 = createThingAttribute(ATTR_KEY_1, ATTR_VALUE_1, "Text");
-		thing.put(attr1);
+//		ThingAttribute attr1 = createThingAttribute(ATTR_KEY_1, ATTR_VALUE_1, "Text");
+//		thing.put(attr1);
 
-		ThingAttribute attr2 = createThingAttribute(ATTR_KEY_2, ATTR_VALUE_2, "Text");
-		thing.put(attr2);
+//		ThingAttribute attr2 = createThingAttribute(ATTR_KEY_2, ATTR_VALUE_2, "Text");
+//		thing.put(attr2);
 
-	}
+//	}
 
 	/**
 	 * See
 	 * https://github.com/spotify/docker-client/blob/master/docs/user_manual.md#creating-a-docker-client
 	 */
-	private void setUpDocker() {
+//	private void setUpDocker() {
 
-		first = false;
+//		first = false;
 
-		DockerClient docker = null;
-		List<Container> containers = null;
+//		DockerClient docker = null;
+//		List<Container> containers = null;
 
-		try {
+//		try {
 
-			docker = DefaultDockerClient.fromEnv().build();
-			if (docker != null) {
-				log.info("Docker created");
-			}
+//			docker = DefaultDockerClient.fromEnv().build();
+//			if (docker != null) {
+//				log.info("Docker created");
+//			}
 
 			// setUpContainer(docker, MONGO_IMAGE, MONGO_NAME);
 
-			containers = docker.listContainers(ListContainersParam.allContainers());
-			Container orion = null;
+//			containers = docker.listContainers(ListContainersParam.allContainers());
+//			Container orion = null;
 
-			System.out.println("Pulling");
-			docker.pull(FIWARE_IMAGE);
+//			System.out.println("Pulling");
+//			docker.pull(FIWARE_IMAGE);
 			// Create container
 			// +" -dbhost mongo"
-			HostConfig hostConfig = HostConfig.builder()
-					.portBindings(ImmutableMap.of("1026", Arrays.asList(PortBinding.of("", "1026"))))
-					.links("orioncluster_mongo_1:orioncluster_mongo_1").build();
-			final ContainerConfig config = ContainerConfig.builder().image(FIWARE_IMAGE).hostConfig(hostConfig)
-					.exposedPorts("1026").cmd("-dbhost 172.17.0.3:27017").build();
+//			HostConfig hostConfig = HostConfig.builder()
+//					.portBindings(ImmutableMap.of("1026", Arrays.asList(PortBinding.of("", "1026"))))
+//					.links("orioncluster_mongo_1:orioncluster_mongo_1").build();
+//			final ContainerConfig config = ContainerConfig.builder().image(FIWARE_IMAGE).hostConfig(hostConfig)
+//					.exposedPorts("1026").cmd("-dbhost 172.17.0.3:27017").build();
 
 
 			// Map<String, List<PortBinding>> portBindings = new HashMap<String,
@@ -147,19 +146,19 @@ public class OrionConectivityOperationTest {
 			// HostConfig.builder().portBindings(portBindings).networkMode("bridge").build();
 			// dockerClient.startContainer(containerId, hostConfig);
 
-			System.out.println("Creating container");
-			System.out.println(config.toString());
-			docker.createContainer(config, ORION_NAME);
-			System.out.println("Starting container");
-			docker.startContainer(ORION_NAME);
+//			System.out.println("Creating container");
+//			System.out.println(config.toString());
+//			docker.createContainer(config, ORION_NAME);
+//			System.out.println("Starting container");
+//			docker.startContainer(ORION_NAME);
 
-			log.info("Starting " + FIWARE_IMAGE);
-			System.out.println("Starting " + FIWARE_IMAGE);
-			docker.startContainer(FIWARE_IMAGE);
+//			log.info("Starting " + FIWARE_IMAGE);
+//			System.out.println("Starting " + FIWARE_IMAGE);
+//			docker.startContainer(FIWARE_IMAGE);
 
-		} catch (Exception e) {
-			e.printStackTrace();
-		}
+//		} catch (Exception e) {
+//			e.printStackTrace();
+//		}
 
 		/*
 		 * if (containers != null) { for (Container container : containers) {
@@ -207,64 +206,64 @@ public class OrionConectivityOperationTest {
 		 * }
 		 */
 
-	}
+//	}
 
-	private void setUpContainer(DockerClient docker, String image, String name, String... ports) {
-		List<Container> containers = null;
+//	private void setUpContainer(DockerClient docker, String image, String name, String... ports) {
+//		List<Container> containers = null;
 
-		try {
-			containers = docker.listContainers(ListContainersParam.allContainers());
-			Container container = null;
-			if (containers != null) {
-				for (Container containerItem : containers) {
-					log.info("ToString-->" + containerItem.toString());
-					if (containerItem.image().equals(image)) {
-						System.out.println("Found");
-						container = containerItem;
-						break;
-					}
-				}
-				if (container != null) {
-					log.info("The " + image + " container exists. Starting.");
-					docker.startContainer(container.id());
-				} else {
+//		try {
+//			containers = docker.listContainers(ListContainersParam.allContainers());
+//			Container container = null;
+//			if (containers != null) {
+//				for (Container containerItem : containers) {
+//					log.info("ToString-->" + containerItem.toString());
+//					if (containerItem.image().equals(image)) {
+//						System.out.println("Found");
+//						container = containerItem;
+//						break;
+//					}
+//				}
+//				if (container != null) {
+//					log.info("The " + image + " container exists. Starting.");
+//					docker.startContainer(container.id());
+//				} else {
 
-					log.info("The " + image + " container does not exists. Creating.");
-					List<Image> imageList = new ArrayList<>();
-					imageList = (ArrayList<Image>) docker.listImages();
-					log.info("Pulling " + image);
+//					log.info("The " + image + " container does not exists. Creating.");
+//					List<Image> imageList = new ArrayList<>();
+//					imageList = (ArrayList<Image>) docker.listImages();
+//					log.info("Pulling " + image);
 					// Pull image
-					docker.pull(image);
-					// Create container
-					ContainerConfig config = null;
-					if (ports != null) {
-						config = ContainerConfig.builder().image(image).exposedPorts(ports).build();
-					} else {
-						config = ContainerConfig.builder().image(image).build();
-					}
+//					docker.pull(image);
+//					// Create container
+//					ContainerConfig config = null;
+//					if (ports != null) {
+//						config = ContainerConfig.builder().image(image).exposedPorts(ports).build();
+//					} else {
+//						config = ContainerConfig.builder().image(image).build();
+//					}
 
-					docker.createContainer(config, name);
-					docker.startContainer(name);
+//					docker.createContainer(config, name);
+//					docker.startContainer(name);
 
-					log.info("Starting " + image);
-					docker.startContainer(image);
+//					log.info("Starting " + image);
+//					docker.startContainer(image);
 
-				}
-			}
-		} catch (DockerException | InterruptedException e) {
+//				}
+//			}
+//		} catch (DockerException | InterruptedException e) {
 			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
+//			e.printStackTrace();
+//		}
 
-	}
+//	}
 
-	private void setupLog() {
-		consoleHandler.setLevel(Level.FINER);
-		log.addHandler(consoleHandler);
-	}
+//	private void setupLog() {
+//		consoleHandler.setLevel(Level.FINER);
+//		log.addHandler(consoleHandler);
+//	}
 
-	@Test
-	public void testCreateThing() {
+//	@Test
+//	public void testCreateThing() {
 //TODO FF 20.9.2017, refactor
 /*		try {
 			client.create(thing);
@@ -273,10 +272,11 @@ public class OrionConectivityOperationTest {
 			log.info(e.getCause() + " -  -  - " + e.getMessage());
 			e.printStackTrace();
 		}
-*/	}
+*/
+//	}
 
-	@Test
-	public void testReadThing() {
+//	@Test
+//	public void testReadThing() {
 //TODO FF 20.9.2017, refactor
 		/*		OrionQuery query = new OrionQuery();
 		query.setThingId(new ThingId(ID_THING_ID_1));
@@ -288,10 +288,11 @@ public class OrionConectivityOperationTest {
 			log.info(e.getCause() + " -  -  - " + e.getMessage());
 			e.printStackTrace();
 		}
-*/	}
+*/
+//	}
 
-	@Test
-	public void testupdateThing() throws Exception {
+//	@Test
+//	public void testupdateThing() throws Exception {
 //TODO FF 20.9.2017, refactor
 /*
 		testCreateThing();
@@ -320,16 +321,16 @@ public class OrionConectivityOperationTest {
 		Assert.assertNotNull(thingNew.getAttribute(ATTR_KEY_1));
 		Assert.assertEquals("a_new_value", thingNew.getAttributeValue(ATTR_KEY_1));
 */
-	}
+//	}
 
-	@SuppressWarnings({ "rawtypes", "unchecked" })
-	protected ThingAttribute createThingAttribute(String key, String value, String type) {
-		ThingAttribute attr = new ThingAttribute(key, value, type);
-		return attr;
-	}
+//	@SuppressWarnings({ "rawtypes", "unchecked" })
+//	protected ThingAttribute createThingAttribute(String key, String value, String type) {
+//		ThingAttribute attr = new ThingAttribute(key, value, type);
+//		return attr;
+//	}
 
-	@Test
-	public void testDeleteAssets() {
+//	@Test
+//	public void testDeleteAssets() {
 //TODO FF 20.9.2017, refactor
 /*		try {
 			client.delete(new ThingId(ID_THING_ID_1));
@@ -338,6 +339,6 @@ public class OrionConectivityOperationTest {
 			log.info(e.getCause() + " -  -  - " + e.getMessage());
 			e.printStackTrace();
 		}*/
-	}
+//	}
 
-}
+//}
