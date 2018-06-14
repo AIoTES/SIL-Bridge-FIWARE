@@ -7,7 +7,7 @@ import static org.junit.Assert.assertTrue;
 import static spark.Spark.post;
 
 import eu.interiot.intermw.commons.model.*;
-import eu.interiot.intermw.commons.model.PlatformType;
+//import eu.interiot.intermw.commons.model.PlatformType;
 import org.apache.jena.atlas.logging.Log;
 import org.junit.After;
 import org.junit.Before;
@@ -18,7 +18,7 @@ import org.slf4j.LoggerFactory;
 import com.google.gson.Gson;
 import com.google.gson.JsonObject;
 
-import eu.interiot.intermw.bridge.Context;
+//import eu.interiot.intermw.bridge.Context;
 import eu.interiot.intermw.bridge.exceptions.BridgeException;
 import eu.interiot.intermw.bridge.orion.OrionBridge;
 import eu.interiot.intermw.commons.exceptions.MiddlewareException;

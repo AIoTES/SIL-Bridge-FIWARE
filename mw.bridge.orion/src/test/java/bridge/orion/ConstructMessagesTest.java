@@ -1,6 +1,7 @@
 package bridge.orion;
 
 import java.io.IOException;
+import java.net.MalformedURLException;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Paths;
@@ -24,10 +25,10 @@ import eu.interiot.intermw.bridge.orion.OrionV2Utils;
 import eu.interiot.intermw.commons.DefaultConfiguration;
 import eu.interiot.intermw.commons.exceptions.MiddlewareException;
 import eu.interiot.intermw.commons.interfaces.Configuration;
-import eu.interiot.intermw.commons.model.OntologyId;
+//import eu.interiot.intermw.commons.model.OntologyId;
 import eu.interiot.intermw.commons.model.Platform;
-import eu.interiot.intermw.commons.model.PlatformId;
-import eu.interiot.intermw.commons.model.PlatformType;
+//import eu.interiot.intermw.commons.model.PlatformId;
+//import eu.interiot.intermw.commons.model.PlatformType;
 import eu.interiot.message.Message;
 import eu.interiot.message.MessagePayload;
 import eu.interiot.message.managers.URI.URIManagerMessageMetadata.MessageTypesEnum;
@@ -45,10 +46,18 @@ public class ConstructMessagesTest {
 	protected final String TEST_FILE_NAME = "tmp_response_file.json";
 	
 	@Test
-	public void buildAndTest() throws MiddlewareException {
+	public void buildAndTest() throws MiddlewareException, MalformedURLException {
 		//TODO - Must configure a real platform for tests and conect it to Docker Bridge Orion
 		platformId = "http://inter-iot.eu/example-platform127";
-		platform = new Platform(new PlatformId(platformId), "Test", new PlatformType("FIWARE"), "http://www.w3.org/ns/sosa/Platform", new OntologyId("GOIoTP#SoftwarePlatform")); //baseUrl, Ontology
+//		platform = new Platform(new PlatformId(platformId), "Test", new PlatformType("FIWARE"), "http://www.w3.org/ns/sosa/Platform", new OntologyId("GOIoTP#SoftwarePlatform")); //baseUrl, Ontology
+		platform = new Platform();
+		 // SHOULD GET THESE VALUES FROM THE MESSAGE (AND SOME OF THEM FROM PROPERTIES)
+		platform.setPlatformId(platformId);
+        platform.setClientId("test");
+        platform.setName("Example Platform #1");
+        platform.setType("FIWARE");
+        platform.setBaseEndpoint(new URL("http://localhost:4569/"));
+        platform.setLocation("http://test.inter-iot.eu/TestLocation");
 		configuration = new DefaultConfiguration("*.bridge.properties");
 		orionBridge = new OrionBridge(configuration, platform);
 		BASE_PATH = configuration.getProperty("orion-base-path");
@@ -93,7 +102,8 @@ public class ConstructMessagesTest {
 					
 					try {
 						//Test the message generated
-						orionBridge.send(messageResponsePlatform);
+//						orionBridge.send(messageResponsePlatform);
+						orionBridge.process(messageResponsePlatform);
 					} catch (BridgeException e) {
 						e.printStackTrace();
 					}
@@ -102,7 +112,8 @@ public class ConstructMessagesTest {
 			    else{
 					System.out.println(fileContent);
 					Message platformMsg = new Message(fileContent);
-					orionBridge.send(platformMsg);
+//					orionBridge.send(platformMsg);
+					orionBridge.process(platformMsg);
 			    }
 		    }
 		    catch (Exception e) {

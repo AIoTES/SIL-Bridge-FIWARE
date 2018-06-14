@@ -67,8 +67,11 @@ public class OrionV2Utils {
     //remove {subscriptionId}
     private static final String FIWARE_ENTITY_UNSUBSCRIBE = "/v2/subscriptions";
     
+    public static final String URIoldssn = "http://purl.oclc.org/NET/ssnx/ssn#";
+    
     // Types
     public static final String EntityTypeDevice = FIWAREv2Translator.FIWAREbaseURI + "Entity";
+    public static final String EntityTypeSSNDevice = URIoldssn + "Device";
     
     public static final String propHasIdURI = FIWAREv2Translator.FIWAREbaseURI + "hasId";
        	
@@ -288,7 +291,8 @@ public class OrionV2Utils {
     }
     
     public static String getPlatformId(Platform platform){
-		return platform.getId().getId();
+//		return platform.getId().getId();
+		return platform.getPlatformId();
 	}
     
     public static Set<String> getEntityIDsFromPayload(MessagePayload payload, String entityType) {

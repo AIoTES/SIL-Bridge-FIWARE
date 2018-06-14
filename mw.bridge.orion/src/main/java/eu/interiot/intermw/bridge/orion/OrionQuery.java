@@ -17,12 +17,12 @@
  *    This code is licensed under the EPL license, available at the root
  *    application directory.
  */
-package eu.interiot.intermw.bridge.orion;
+//package eu.interiot.intermw.bridge.orion;
 
-import java.util.List;
+//import java.util.List;
 
-import eu.interiot.intermw.bridge.model.AbstractQuery;
-import eu.interiot.intermw.bridge.orion.enums.Options;
+//import eu.interiot.intermw.bridge.model.AbstractQuery;
+//import eu.interiot.intermw.bridge.orion.enums.Options;
 
 /**
  * FIXME add javadoc
@@ -31,46 +31,46 @@ import eu.interiot.intermw.bridge.orion.enums.Options;
  * @author <a href="mailto:mllorente@prodevelop.es">Miguel A. Llorente</a>
  *
  */
-public class OrionQuery extends AbstractQuery {
+//public class OrionQuery extends AbstractQuery {
 
-	private List<Options> options;
+//	private List<Options> options;
 
-	public OrionQuery() {
-		super();
-	}
+//	public OrionQuery() {
+//		super();
+//	}
 
 	/**
 	 * @return the options
 	 */
-	public List<Options> getOptions() {
-		return options;
-	}
+//	public List<Options> getOptions() {
+//		return options;
+//	}
 
 	/**
 	 * @return the options in comma-separated values
 	 */
-	public String getOptionsInCommaSeparatedString() {
-		if (options != null) {
-			StringBuffer sb = new StringBuffer();
+//	public String getOptionsInCommaSeparatedString() {
+//		if (options != null) {
+//			StringBuffer sb = new StringBuffer();
 
-			int i = 0;
-			for (Options option : options) {
-				i++;
-				sb.append(option.toString());
-				if (i < options.size() - 1)
-					sb.append(",");
-			}
-			return sb.toString();
-		}
-		return null;
-	}
+//			int i = 0;
+//			for (Options option : options) {
+//				i++;
+//				sb.append(option.toString());
+//				if (i < options.size() - 1)
+//					sb.append(",");
+//			}
+//			return sb.toString();
+//		}
+//		return null;
+//	}
 
 	/**
 	 * @param options
 	 *            the options to set
 	 */
-	public void setOptions(List<Options> options) {
-		this.options = options;
-	}
+//	public void setOptions(List<Options> options) {
+//		this.options = options;
+//	}
 
-}
+//}

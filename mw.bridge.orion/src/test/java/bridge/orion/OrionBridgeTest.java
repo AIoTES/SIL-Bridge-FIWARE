@@ -52,7 +52,15 @@ public class OrionBridgeTest {
 			Message platformRegisterMsg = new Message(platformRegisterJson);
 			// create Platform object using platform-register message
 			EntityID platformId = platformRegisterMsg.getMetadata().asPlatformMessageMetadata().getReceivingPlatformIDs().iterator().next();
-			Platform platform = new Platform(platformId.toString(), platformRegisterMsg.getPayload());
+//			Platform platform = new Platform(platformId.toString(), platformRegisterMsg.getPayload());
+			Platform platform = new Platform();
+			platform.setPlatformId(platformId.toString());
+			 // SHOULD GET THESE VALUES FROM THE MESSAGE (AND SOME OF THEM FROM PROPERTIES)
+	        platform.setClientId("test");
+	        platform.setName("Example Platform #1");
+	        platform.setType("FIWARE");
+	        platform.setBaseEndpoint(new URL("http://localhost:4569/"));
+	        platform.setLocation("http://test.inter-iot.eu/TestLocation");
 			
 			URL url2 = Resources.getResource("messages/thing-register-FIWARE.json");
 			String thingRegisterJson = Resources.toString(url2, Charsets.UTF_8);
@@ -82,7 +90,8 @@ public class OrionBridgeTest {
 			//orionBridge.send(thingRegisterMsg);
 			//orionBridge.send(thingQueryMsg);
 			//orionBridge.send(thingUnregisterMsg);
-			orionBridge.send(thingUpdateMsg);
+//			orionBridge.send(thingUpdateMsg);
+			orionBridge.process(thingUpdateMsg);
 			//FIWAREv2Translator translator = new FIWAREv2Translator();			
 			//String body = translator.toFormatX(thingRegisterMsg.getPayload().getJenaModel());
 			
