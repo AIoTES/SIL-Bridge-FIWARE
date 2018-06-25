@@ -297,12 +297,23 @@ public class OrionBridge extends AbstractBridge {
 	@Override
 	public Message observe(Message message) {
 		Message responseMessage = createResponseMessage(message);
-		Set<String> deviceIds = OrionV2Utils.getEntityIds(message);
-		for(String deviceId : deviceIds){
+//		Set<String> deviceIds = OrionV2Utils.getEntityIds(message);
+//		for(String deviceId : deviceIds){
 			try {
 				FIWAREv2Translator translator = new FIWAREv2Translator();
 				String body = translator.toFormatX(message.getPayload().getJenaModel());
-				String responseBody = OrionV2Utils.publishEntityObservation(BASE_PATH, deviceId, body);
+				
+				logger.debug("Observation data: " + body);
+				JsonParser parser = new JsonParser();
+			    JsonObject bodyObject = parser.parse(body).getAsJsonObject();
+			    JsonObject data = bodyObject.get("data").getAsJsonArray().get(0).getAsJsonObject();
+			    String deviceId = data.get("id").getAsString();
+			    logger.debug("DeviceId: " + deviceId);
+			    data.remove("id");
+			    data.remove("type");
+			    String responseBody = OrionV2Utils.publishEntityObservation(BASE_PATH, deviceId, data.toString());
+				
+//				String responseBody = OrionV2Utils.publishEntityObservation(BASE_PATH, deviceId, body);
 				// Get the Model from the response
 				Model translatedModel = translator.toJenaModel(responseBody);			
 				// Create a new message payload for the response message
@@ -316,7 +327,7 @@ public class OrionBridge extends AbstractBridge {
 				responseMessage.getMetadata().setMessageType(MessageTypesEnum.ERROR);
 				responseMessage.getMetadata().asErrorMessageMetadata().setExceptionStackTrace(e);
 			}
-		}			
+//		}			
 		return responseMessage; 
 	}
 	

@@ -92,8 +92,10 @@ public class OrionV2Utils {
 	}
 	
 	public static String publishEntityObservation(String baseUrl, String entityId ,String body) throws IOException {
-		String completeUrl = baseUrl + FIWARE_ENTITY_OBSERVATION+"/"+entityId;
-		return putToFiware(completeUrl,body);
+//		String completeUrl = baseUrl + FIWARE_ENTITY_OBSERVATION+"/"+entityId;
+//		return putToFiware(completeUrl,body);
+		String completeUrl = baseUrl + FIWARE_ENTITY_OBSERVATION+"/"+entityId+"/attrs";
+		return postToFiware(completeUrl,body);
 	}
 	
 	public static String discoverEntities(String baseUrl) throws IOException {
