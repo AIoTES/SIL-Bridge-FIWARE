@@ -75,6 +75,11 @@ public class OrionV2Utils {
     
     public static final String propHasIdURI = FIWAREv2Translator.FIWAREbaseURI + "hasId";
        	
+    
+    //Header update
+    static String service = null;
+    static String servicePath = null;
+    
 	public static String registerEntity(String baseUrl, String body) throws IOException {
 		String completeUrl = baseUrl + FIWARE_ENTITY_REGISTER;
 		return postToFiware(completeUrl, body);
@@ -121,12 +126,15 @@ public class OrionV2Utils {
 		return deleteInFiware(completeUrl); 
 	}
 	
-    private static String postToFiware(String url, String body) throws IOException{
-    		
+    private static String postToFiware(String url, String body) throws IOException{   	
+    	   	
 		httpClient = HttpClientBuilder.create().build();
         HttpPost httpPost = new HttpPost(url);        
         HttpEntity httpEntity = new StringEntity(body, ContentType.APPLICATION_JSON);
-        httpPost.setEntity(httpEntity);
+        httpPost.setEntity(httpEntity);   
+        
+        if (service != null && service !="") httpPost.setHeader("Fiware-Service", service);     
+        if (servicePath != null && servicePath !="") httpPost.setHeader("Fiware-ServicePath", servicePath);        
         HttpResponse response = null;
         String responseBody = "";
 		try {

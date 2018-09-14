@@ -82,6 +82,8 @@ public class OrionBridge extends AbstractBridge {
 		String callbackAddress = configuration.getProperty("bridge.callback.subscription.context");
 		get(callbackAddress, (req, res) -> testServerGet(req));
 //		post(callbackAddress,(req, res) -> publishObservationToIntermw(req));
+		OrionV2Utils.service = configuration.getProperty(PROPERTIES_PREFIX + "service");
+		OrionV2Utils.servicePath = configuration.getProperty(PROPERTIES_PREFIX + "servicePath");
 	}
 	
 	@Override
