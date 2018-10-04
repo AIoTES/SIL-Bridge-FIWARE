@@ -24,7 +24,9 @@ import static spark.Spark.post;
 import java.io.FileOutputStream;
 import java.io.OutputStream;
 import java.nio.file.Paths;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 import org.apache.jena.rdf.model.Model;
@@ -62,6 +64,7 @@ public class OrionBridge extends AbstractBridge {
 	private final String BASE_PATH;
 	private String callbackAddress;
 	private String bridgeSubscriptionsCallbackAddress;
+	private Map<String,String> subscriptionIds = new HashMap<String,String>();
 
 	private final Logger logger = LoggerFactory.getLogger(OrionBridge.class);
 	
@@ -394,6 +397,9 @@ public class OrionBridge extends AbstractBridge {
 			responseMessage.getMetadata().setStatus("OK");
 			// If test, save the subscription id in order to be able to unsubscribe
 			
+			String subscriptionId = parser.parse(responseBody).getAsJsonObject().get("id").getAsString();
+			subscriptionIds.put(conversationId, subscriptionId); // SUBSCRIPTION ID IS NEEDED FOR UNSUBSCRIBE METHOD. UNSUBSCRIBE MESSAGE CONTAINS CONVERSATIONID
+			
 			Spark.post(conversationId, (req, response) -> { // SOFIA2 sends data using a HTTP PUT query
 				 Message callbackMessage = new Message();
 		         try{
@@ -446,18 +452,22 @@ public class OrionBridge extends AbstractBridge {
 	public Message unsubscribe(Message message) {
 		Message responseMessage = createResponseMessage(message);
 		try{
-			Set<String> entityIds = OrionV2Utils.getPlatformIds(message);
-			for (String entityId : entityIds) {
-				logger.info("Unsubscribing {}...", entityId);
-				String responseBody = OrionV2Utils.removeSubscription(BASE_PATH, entityId);
-				// Get the Model from the response
-				FIWAREv2Translator translator = new FIWAREv2Translator();
-				Model translatedModel = translator.toJenaModel(responseBody);			
-				// Create a new message payload for the response message
-				MessagePayload responsePayload = new MessagePayload(translatedModel);
-				// Attach the payload to the message
-				responseMessage.setPayload(responsePayload);
-			}
+//			Set<String> entityIds = OrionV2Utils.getPlatformIds(message);
+//			for (String entityId : entityIds) {
+//				logger.info("Unsubscribing {}...", entityId);
+//				String responseBody = OrionV2Utils.removeSubscription(BASE_PATH, entityId);
+//				// Get the Model from the response
+//				FIWAREv2Translator translator = new FIWAREv2Translator();
+//				Model translatedModel = translator.toJenaModel(responseBody);			
+//				// Create a new message payload for the response message
+//				MessagePayload responsePayload = new MessagePayload(translatedModel);
+//				// Attach the payload to the message
+//			responseMessage.setPayload(responsePayload);
+			String conversationId = OrionV2Utils.extractConversationId(message);
+			logger.info("Unsubscribing from things in conversation {}...", conversationId);
+			String subId = subscriptionIds.get(conversationId); // RETRIEVE SUBSCRIPTION IDs
+			String responseBody = OrionV2Utils.removeSubscription(BASE_PATH, subId);
+			subscriptionIds.remove(conversationId);
 			responseMessage.getMetadata().setStatus("OK");
 		}
 		catch (Exception e){ 

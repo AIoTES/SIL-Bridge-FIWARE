@@ -30,13 +30,16 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 
+import eu.interiot.intermw.bridge.exceptions.BridgeException;
 import eu.interiot.intermw.commons.model.Platform;
 import eu.interiot.message.Message;
 import eu.interiot.message.MessageMetadata;
 import eu.interiot.message.MessagePayload;
 import eu.interiot.message.ID.EntityID;
+import eu.interiot.message.ID.PropertyID;
 import eu.interiot.message.managers.URI.URIManagerMessageMetadata.MessageTypesEnum;
 import eu.interiot.message.metadata.PlatformMessageMetadata;
+import eu.interiot.message.payload.types.IoTDevicePayload;
 import eu.interiot.translators.syntax.FIWARE.FIWAREv2Translator;
 
 public class OrionV2Utils {
@@ -389,5 +392,20 @@ public class OrionV2Utils {
 		MessagePayload responsePayload = new MessagePayload(translatedModel);
 		// Attach the payload to the message
 		messageResponse.setPayload(responsePayload);
+    }
+    
+    static String extractConversationId(Message message) throws BridgeException {
+        IoTDevicePayload ioTDevicePayload = message.getPayloadAsGOIoTPPayload().asIoTDevicePayload();
+        Set<EntityID> deviceEntityIds = ioTDevicePayload.getIoTDevices();
+
+        if (deviceEntityIds.size() > 0) {
+            Set<String> propertyValues = ioTDevicePayload.getAllDataPropertyAssertionsForEntityAsStrings(
+                    deviceEntityIds.iterator().next(),
+                    new PropertyID("http://inter-iot.eu/conversationId"));
+            return propertyValues.iterator().next();
+
+        } else {
+            throw new BridgeException("Invalid UNSUBSCRIBE message: failed to extract conversationId");
+        }
     }
 }
