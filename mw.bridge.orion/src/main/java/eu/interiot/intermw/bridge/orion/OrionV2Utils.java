@@ -5,6 +5,8 @@ import java.util.HashSet;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import javax.net.ssl.SSLContext;
+
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.methods.HttpDelete;
@@ -83,6 +85,10 @@ public class OrionV2Utils {
     static String service = null;
     static String servicePath = null;
     
+    // Authentication
+    static String token = null;
+    static SSLContext customSslContext = null;
+    
 	public static String registerEntity(String baseUrl, String body) throws IOException {
 		String completeUrl = baseUrl + FIWARE_ENTITY_REGISTER;
 		return postToFiware(completeUrl, body);
@@ -130,14 +136,16 @@ public class OrionV2Utils {
 	}
 	
     private static String postToFiware(String url, String body) throws IOException{   	
-    	   	
-		httpClient = HttpClientBuilder.create().build();
+    	    	
+		if(customSslContext == null)  httpClient = HttpClientBuilder.create().build();
+		else httpClient = HttpClientBuilder.create().setSSLContext(customSslContext).build();
         HttpPost httpPost = new HttpPost(url);        
         HttpEntity httpEntity = new StringEntity(body, ContentType.APPLICATION_JSON);
         httpPost.setEntity(httpEntity);   
         
         if (service != null && service !="") httpPost.setHeader("Fiware-Service", service);     
-        if (servicePath != null && servicePath !="") httpPost.setHeader("Fiware-ServicePath", servicePath);        
+        if (servicePath != null && servicePath !="") httpPost.setHeader("Fiware-ServicePath", servicePath);
+        if (token != null) httpPost.setHeader("x-auth-token", token);
         HttpResponse response = null;
         String responseBody = "";
 		try {
@@ -164,8 +172,10 @@ public class OrionV2Utils {
 	}
     
     private static String getFromFiware(String url) throws IOException{
-		httpClient = HttpClientBuilder.create().build();
+    	if(customSslContext == null)  httpClient = HttpClientBuilder.create().build();
+		else httpClient = HttpClientBuilder.create().setSSLContext(customSslContext).build();
         HttpGet httpGet = new HttpGet(url);        
+        if (token != null) httpGet.setHeader("x-auth-token", token);
         HttpResponse response = null;
         String responseBody = "";
 		try {
@@ -186,9 +196,11 @@ public class OrionV2Utils {
 	}
     
     private static String putToFiware(String url, String body) throws IOException{
-		httpClient = HttpClientBuilder.create().build();
+    	if(customSslContext == null)  httpClient = HttpClientBuilder.create().build();
+		else httpClient = HttpClientBuilder.create().setSSLContext(customSslContext).build();
         HttpPut httpPut = new HttpPut(url); 
         HttpEntity httpEntity = new StringEntity(body, ContentType.APPLICATION_JSON);
+        if (token != null) httpPut.setHeader("x-auth-token", token);
         httpPut.setEntity(httpEntity);
         HttpResponse response = null;
         String responseBody = "";
@@ -210,8 +222,10 @@ public class OrionV2Utils {
 	}
     
     private static String deleteInFiware(String url) throws IOException{
-    	httpClient = HttpClientBuilder.create().build();
+    	if(customSslContext == null)  httpClient = HttpClientBuilder.create().build();
+		else httpClient = HttpClientBuilder.create().setSSLContext(customSslContext).build();
     	HttpDelete httpDelete = new HttpDelete(url);
+    	if (token != null) httpDelete.setHeader("x-auth-token", token);
     	HttpResponse response = null;
     	String responseBody = "";
     	try {

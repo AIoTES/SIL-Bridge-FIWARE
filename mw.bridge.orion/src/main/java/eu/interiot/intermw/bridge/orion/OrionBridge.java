@@ -21,13 +21,23 @@ package eu.interiot.intermw.bridge.orion;
 import static spark.Spark.get;
 import static spark.Spark.post;
 
+import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.OutputStream;
 import java.nio.file.Paths;
+import java.security.KeyStore;
+import java.security.cert.CertificateException;
+import java.security.cert.X509Certificate;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+
+import javax.net.ssl.HttpsURLConnection;
+import javax.net.ssl.SSLContext;
+import javax.net.ssl.TrustManager;
+import javax.net.ssl.TrustManagerFactory;
+import javax.net.ssl.X509TrustManager;
 
 import org.apache.jena.rdf.model.Model;
 import org.slf4j.Logger;
@@ -71,22 +81,41 @@ public class OrionBridge extends AbstractBridge {
 	protected boolean testMode = false;
 	protected String testResultFilePath;
 	protected String testResultFileName;
+	
+	// TrustStore for self-signed certificates
+    private String trustStore;
+	private String trustStorePass;
 
 	public OrionBridge(Configuration configuration, Platform platform) throws MiddlewareException {
 		super(configuration, platform);
-//		BASE_PATH = configuration.getProperty(PROPERTIES_PREFIX + "base-path");
-//		BASE_PATH = platform.getBaseURL(); // Get base path from the Register Platform message
-		BASE_PATH = platform.getBaseEndpoint().toString();
-//		callbackAddress = configuration.getProperty("bridge.callback.address");
-		callbackAddress = configuration.getProperty(PROPERTIES_PREFIX + "callback-address");
-//		bridgeSubscriptionsCallbackAddress = callbackAddress.concat(configuration.getProperty("bridge.callback.subscription.context"));
+		try{
+//			BASE_PATH = configuration.getProperty(PROPERTIES_PREFIX + "base-path");
+//			BASE_PATH = platform.getBaseURL(); // Get base path from the Register Platform message
+			BASE_PATH = platform.getBaseEndpoint().toString();
+//			callbackAddress = configuration.getProperty("bridge.callback.address");
+			callbackAddress = configuration.getProperty(PROPERTIES_PREFIX + "callback-address");
+//			bridgeSubscriptionsCallbackAddress = callbackAddress.concat(configuration.getProperty("bridge.callback.subscription.context"));
 		
-		// Raise the server
-		String callbackAddress = configuration.getProperty("bridge.callback.subscription.context");
-		get(callbackAddress, (req, res) -> testServerGet(req));
-//		post(callbackAddress,(req, res) -> publishObservationToIntermw(req));
-		OrionV2Utils.service = configuration.getProperty(PROPERTIES_PREFIX + "service");
-		OrionV2Utils.servicePath = configuration.getProperty(PROPERTIES_PREFIX + "servicePath");
+			// Raise the server
+			String callbackAddress = configuration.getProperty("bridge.callback.subscription.context");
+			get(callbackAddress, (req, res) -> testServerGet(req));
+//			post(callbackAddress,(req, res) -> publishObservationToIntermw(req));
+			OrionV2Utils.service = configuration.getProperty(PROPERTIES_PREFIX + "service");
+			OrionV2Utils.servicePath = configuration.getProperty(PROPERTIES_PREFIX + "servicePath");
+			// For self-signed certificates
+		    trustStore = configuration.getProperty(PROPERTIES_PREFIX + "certificate");
+	        trustStorePass = configuration.getProperty(PROPERTIES_PREFIX + "certificate-password");
+			if(BASE_PATH.startsWith("https") && trustStore != null) setCustomTrustStore(trustStore, trustStorePass);
+			// Authentication token
+//			OrionV2Utils.token = platform.getEncryptedPassword(); 
+			OrionV2Utils.token = configuration.getProperty(PROPERTIES_PREFIX + "token");; // TODO: improve this
+			
+//			logger.debug("token: " + OrionV2Utils.token);
+		} catch (Exception e) {
+		    throw new MiddlewareException(
+				    "Failed to read UAALBridge configuration: "
+					    + e.getMessage());
+			}
 	}
 	
 	@Override
@@ -508,6 +537,77 @@ public class OrionBridge extends AbstractBridge {
 		return "Petición get recibida";
 	}
 		
+	// For self-signed certificates
+    private void setCustomTrustStore(String trustStore, String trustStorePass) throws Exception{
+    	// TO AVOID PROBLEMS WITH SSL SELF-SIGNED CERTIFICATES
+		TrustManagerFactory tmf = TrustManagerFactory.getInstance(TrustManagerFactory.getDefaultAlgorithm());
+			// Using null here initialises the TMF with the default trust store.
+			tmf.init((KeyStore) null);
+
+			// Get hold of the default trust manager
+			X509TrustManager defaultTm = null;
+			for (TrustManager tm : tmf.getTrustManagers()) {
+			    if (tm instanceof X509TrustManager) {
+			        defaultTm = (X509TrustManager) tm;
+			        break;
+			    }
+			}
+
+			FileInputStream myKeys = new FileInputStream(trustStore);
+
+			// Custom trust store
+			KeyStore myTrustStore = KeyStore.getInstance("JKS");
+			myTrustStore.load(myKeys, trustStorePass.toCharArray());
+			myKeys.close();
+			tmf = TrustManagerFactory.getInstance(TrustManagerFactory.getDefaultAlgorithm());
+			tmf.init(myTrustStore);
+			
+			// Get hold of the default trust manager
+			X509TrustManager myTm = null;
+			for (TrustManager tm : tmf.getTrustManagers()) {
+			    if (tm instanceof X509TrustManager) {
+			        myTm = (X509TrustManager) tm;
+			        break;
+			    }
+			}
+
+			// Wrap it in your own class.
+			final X509TrustManager finalDefaultTm = defaultTm;
+			final X509TrustManager finalMyTm = myTm;
+			X509TrustManager customTm = new X509TrustManager() {
+			    @Override
+			    public X509Certificate[] getAcceptedIssuers() {
+			        // If you're planning to use client-cert auth,
+			        // merge results from "defaultTm" and "myTm".
+			        return finalDefaultTm.getAcceptedIssuers();
+			    }
+
+			    @Override
+			    public void checkServerTrusted(X509Certificate[] chain,
+			            String authType) throws CertificateException {
+			        try {
+			            finalMyTm.checkServerTrusted(chain, authType);
+			        } catch (CertificateException e) {
+			            // This will throw another CertificateException if this fails too.
+			            finalDefaultTm.checkServerTrusted(chain, authType);
+			        }
+			    }
+
+			    @Override
+			    public void checkClientTrusted(X509Certificate[] chain,
+			            String authType) throws CertificateException {
+			        // If you're planning to use client-cert auth,
+			        // do the same as checking the server.
+			        finalDefaultTm.checkClientTrusted(chain, authType);
+			    }
+			};
+			
+			SSLContext sslContext = SSLContext.getInstance("SSL");
+			sslContext.init(null, new TrustManager[] { customTm }, null);
+			OrionV2Utils.customSslContext = sslContext;
+			
+    }
+	
 //	private String publishObservationToIntermw(Request req){
 //		 Message callbackMessage = new Message();
 //         try{
