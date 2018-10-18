@@ -2,9 +2,9 @@ package bridge.orion;
 
 import java.net.URL;
 
+import eu.interiot.intermw.bridge.BridgeConfiguration;
 import eu.interiot.intermw.bridge.orion.OrionBridge;
 import eu.interiot.intermw.commons.DefaultConfiguration;
-import eu.interiot.intermw.commons.interfaces.Configuration;
 //import eu.interiot.intermw.commons.model.OntologyId;
 import eu.interiot.intermw.commons.model.Platform;
 //import eu.interiot.intermw.commons.model.PlatformId;
@@ -12,7 +12,7 @@ import eu.interiot.intermw.commons.model.Platform;
 
 public class SparkTest {
 	
-	static Configuration configuration;
+	static BridgeConfiguration configuration;
 	static Platform platform;
 	static OrionBridge orionBridge;
 	static String BASE_PATH;
@@ -30,7 +30,8 @@ public class SparkTest {
 	        platform.setType("FIWARE");
 	        platform.setBaseEndpoint(new URL("http://localhost:4569/"));
 	        platform.setLocation("http://test.inter-iot.eu/TestLocation");
-			configuration = new DefaultConfiguration("*.bridge.properties");
+//			configuration = new DefaultConfiguration("*.bridge.properties");
+	        configuration = new BridgeConfiguration("OrionBridge.properties", "http://inter-iot.eu/example-platform1", new DefaultConfiguration("intermw.properties"));
 			orionBridge = new OrionBridge(configuration, platform);
 		}
 		catch(Exception e){}

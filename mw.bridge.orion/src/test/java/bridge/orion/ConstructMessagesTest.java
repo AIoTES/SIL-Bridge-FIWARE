@@ -19,12 +19,12 @@ import com.google.gson.GsonBuilder;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 
+import eu.interiot.intermw.bridge.BridgeConfiguration;
 import eu.interiot.intermw.bridge.exceptions.BridgeException;
 import eu.interiot.intermw.bridge.orion.OrionBridge;
 import eu.interiot.intermw.bridge.orion.OrionV2Utils;
 import eu.interiot.intermw.commons.DefaultConfiguration;
 import eu.interiot.intermw.commons.exceptions.MiddlewareException;
-import eu.interiot.intermw.commons.interfaces.Configuration;
 //import eu.interiot.intermw.commons.model.OntologyId;
 import eu.interiot.intermw.commons.model.Platform;
 //import eu.interiot.intermw.commons.model.PlatformId;
@@ -35,7 +35,7 @@ import eu.interiot.message.managers.URI.URIManagerMessageMetadata.MessageTypesEn
 import eu.interiot.translators.syntax.FIWARE.FIWAREv2Translator;
 
 public class ConstructMessagesTest {
-	Configuration configuration;
+	BridgeConfiguration configuration;
 	Platform platform;
 	OrionBridge orionBridge;
 	String BASE_PATH;
@@ -48,7 +48,7 @@ public class ConstructMessagesTest {
 	@Test
 	public void buildAndTest() throws MiddlewareException, MalformedURLException {
 		//TODO - Must configure a real platform for tests and conect it to Docker Bridge Orion
-		platformId = "http://inter-iot.eu/example-platform127";
+		platformId = "http://inter-iot.eu/example-platform1";
 //		platform = new Platform(new PlatformId(platformId), "Test", new PlatformType("FIWARE"), "http://www.w3.org/ns/sosa/Platform", new OntologyId("GOIoTP#SoftwarePlatform")); //baseUrl, Ontology
 		platform = new Platform();
 		 // SHOULD GET THESE VALUES FROM THE MESSAGE (AND SOME OF THEM FROM PROPERTIES)
@@ -58,7 +58,8 @@ public class ConstructMessagesTest {
         platform.setType("FIWARE");
         platform.setBaseEndpoint(new URL("http://localhost:4569/"));
         platform.setLocation("http://test.inter-iot.eu/TestLocation");
-		configuration = new DefaultConfiguration("*.bridge.properties");
+//		configuration = new DefaultConfiguration("*.bridge.properties");
+        configuration = new BridgeConfiguration("OrionBridge.properties", platformId, new DefaultConfiguration("intermw.properties"));
 		orionBridge = new OrionBridge(configuration, platform);
 		BASE_PATH = configuration.getProperty("orion-base-path");
 		
@@ -67,6 +68,8 @@ public class ConstructMessagesTest {
 		orionBridge.setTestResultFileName(TEST_FILE_NAME);
 		
 		List<MessageTest> messages = new ArrayList<MessageTest> ();
+		messages.add(new MessageTest(MessageTypesEnum.PLATFORM_REGISTER, "00_platform_register.json"));
+		messages.add(new MessageTest(MessageTypesEnum.LIST_DEVICES, "05_list_devices.json"));
 		messages.add(new MessageTest(MessageTypesEnum.PLATFORM_CREATE_DEVICE, "06_platform_create_device.json"));
 		messages.add(new MessageTest(MessageTypesEnum.LIST_DEVICES, "05_list_devices.json"));
 		messages.add(new MessageTest(MessageTypesEnum.PLATFORM_UPDATE_DEVICE, "08_platform_update_device.json"));
@@ -74,7 +77,6 @@ public class ConstructMessagesTest {
 		messages.add(new MessageTest(MessageTypesEnum.SUBSCRIBE, "02_susbcribe.json"));
 		messages.add(new MessageTest(MessageTypesEnum.UNSUBSCRIBE, TEST_FILE_NAME));
 		messages.add(new MessageTest(MessageTypesEnum.PLATFORM_DELETE_DEVICE, "07_platform_delete_device.json"));
-		messages.add(new MessageTest(MessageTypesEnum.LIST_DEVICES, "05_list_devices.json"));
 				
 		//Iterate the Map
 		messages.forEach(entry -> {
