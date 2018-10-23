@@ -67,7 +67,7 @@ import spark.Spark;
 @eu.interiot.intermw.bridge.annotations.Bridge(platformType = "http://inter-iot.eu/FIWARE")
 public class OrionBridge extends AbstractBridge {
 
-	private final static String PROPERTIES_PREFIX = "orion-";
+//	private final static String PROPERTIES_PREFIX = "orion-";
 	private final String BASE_PATH;
 	private String callbackAddress;
 	private Map<String,String> subscriptionIds = new HashMap<String,String>();
@@ -89,18 +89,18 @@ public class OrionBridge extends AbstractBridge {
 			callbackAddress = this.bridgeCallbackUrl.toString(); // Same base callback address for all bridges
 		
 			// Raise the server
-			String callbackAddress = configuration.getProperty("bridge.callback.subscription.context");
-			get(callbackAddress, (req, res) -> testServerGet(req));
+//			String callbackAddress = configuration.getProperty("bridge.callback.subscription.context");
+//			get(callbackAddress, (req, res) -> testServerGet(req));
 //			post(callbackAddress,(req, res) -> publishObservationToIntermw(req));
-			OrionV2Utils.service = configuration.getProperty(PROPERTIES_PREFIX + "service");
-			OrionV2Utils.servicePath = configuration.getProperty(PROPERTIES_PREFIX + "servicePath");
+			OrionV2Utils.service = configuration.getProperty("service");
+			OrionV2Utils.servicePath = configuration.getProperty("servicePath");
 			// For self-signed certificates
-		    trustStore = configuration.getProperty(PROPERTIES_PREFIX + "certificate");
-	        trustStorePass = configuration.getProperty(PROPERTIES_PREFIX + "certificate-password");
+		    trustStore = configuration.getProperty("certificate");
+	        trustStorePass = configuration.getProperty("certificate-password");
 			if(BASE_PATH.startsWith("https") && trustStore != null) setCustomTrustStore(trustStore, trustStorePass);
 			// Authentication token
 //			OrionV2Utils.token = platform.getEncryptedPassword(); 
-			OrionV2Utils.token = configuration.getProperty(PROPERTIES_PREFIX + "token");; // TODO: improve this
+			OrionV2Utils.token = configuration.getProperty("token");; // TODO: improve this
 			
 //			logger.debug("token: " + OrionV2Utils.token);
 		} catch (Exception e) {
