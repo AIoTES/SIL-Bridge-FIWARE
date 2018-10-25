@@ -68,7 +68,7 @@ import spark.Spark;
 public class OrionBridge extends AbstractBridge {
 
 //	private final static String PROPERTIES_PREFIX = "orion-";
-	private final String BASE_PATH;
+	private String BASE_PATH;
 	private String callbackAddress;
 	private Map<String,String> subscriptionIds = new HashMap<String,String>();
 
@@ -141,6 +141,13 @@ public class OrionBridge extends AbstractBridge {
 	public Message updatePlatform(Message message) throws Exception {
 		logger.info("Updating platform {}...", OrionV2Utils.getPlatformId(platform));
 		Message responseMessage = createResponseMessage(message);
+		String url = platform.getBaseEndpoint().toString(); // Get base path from the Update Platform message
+		if(url!=null){
+			if (url.endsWith("/")) url = url.substring(0, url.length()-1); // Just in case
+			BASE_PATH = url;
+		}
+		// TODO: set new user and password (if needed)
+		// DO ANYTHING ELSE?
 		responseMessage.getMetadata().setStatus("OK");
 		return responseMessage;
 	}
