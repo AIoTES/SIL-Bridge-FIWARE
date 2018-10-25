@@ -85,7 +85,9 @@ public class OrionBridge extends AbstractBridge {
 	public OrionBridge(BridgeConfiguration configuration, Platform platform) throws MiddlewareException {
 		super(configuration, platform);
 		try{
-			BASE_PATH = platform.getBaseEndpoint().toString(); // Get base path from the Register Platform message
+			String url = platform.getBaseEndpoint().toString(); // Get base path from the Register Platform message
+			if (url.endsWith("/")) url = url.substring(0, url.length()-1); // Just in case
+			BASE_PATH = url;
 			callbackAddress = this.bridgeCallbackUrl.toString(); // Same base callback address for all bridges
 		
 			// Raise the server
@@ -101,8 +103,6 @@ public class OrionBridge extends AbstractBridge {
 			// Authentication token
 //			OrionV2Utils.token = platform.getEncryptedPassword(); 
 			OrionV2Utils.token = configuration.getProperty("token");; // TODO: improve this
-			
-//			logger.debug("token: " + OrionV2Utils.token);
 		} catch (Exception e) {
 		    throw new MiddlewareException(
 				    "Failed to read UAALBridge configuration: "
@@ -139,7 +139,7 @@ public class OrionBridge extends AbstractBridge {
 	
 	@Override
 	public Message updatePlatform(Message message) throws Exception {
-		// TODO: Something else?
+		logger.info("Updating platform {}...", OrionV2Utils.getPlatformId(platform));
 		Message responseMessage = createResponseMessage(message);
 		responseMessage.getMetadata().setStatus("OK");
 		return responseMessage;
@@ -147,6 +147,8 @@ public class OrionBridge extends AbstractBridge {
 		
 	@Override
 	public Message platformCreateDevices(Message message) {
+		// TODO: use FIware translator
+		// TODO: test with semantic translation
 		Message responseMessage = createResponseMessage(message);
 		try {
 			logger.info("Creating devices...");
@@ -192,7 +194,6 @@ public class OrionBridge extends AbstractBridge {
 		Message responseMessage = createResponseMessage(message);
 		try {
 			logger.info("Removing devices...");
-			//Set<String> deviceIds = OrionV2Utils.getEntityIds(message);
 			Set<String> deviceIds = OrionV2Utils.getPlatformIds(message);
 			for(String deviceId : deviceIds){
 				String transformedId = OrionV2Utils.filterThingID(deviceId);
@@ -224,7 +225,6 @@ public class OrionBridge extends AbstractBridge {
 	public Message platformUpdateDevices(Message message) {
 		Message responseMessage = createResponseMessage(message);
 		logger.info("Updating devices...");
-		//Set<String> deviceIds = OrionV2Utils.getEntityIds(message);
 		Set<String> deviceIds = OrionV2Utils.getPlatformIds(message);
 		for(String deviceId : deviceIds){
 			try {
@@ -325,17 +325,18 @@ public class OrionBridge extends AbstractBridge {
 		return responseMessage;
 	}
 	
-	@SuppressWarnings("unused")
 	@Override
 	public Message actuate(Message message) {
 		Message responseMessage = createResponseMessage(message);
+		logger.info("Sending actuation data...");
 		Set<String> deviceIds = OrionV2Utils.getEntityIds(message);
 		for(String deviceId : deviceIds){
 			try {
 				FIWAREv2Translator translator = new FIWAREv2Translator();
 				String body = translator.toFormatX(message.getPayload().getJenaModel());
-				// TODO Which is the API method that implements actuations?
-				//OrionV2Utils.doAction(BASE_PATH, deviceId, body);					
+				// Update entity in Fiware
+				String transformedId = OrionV2Utils.filterThingID(deviceId);
+				String responseBody = OrionV2Utils.updateEntity(BASE_PATH, transformedId, body);	
 			} 
 			catch (Exception e) {
 				logger.error("Error in actuate: " + e.getMessage());
