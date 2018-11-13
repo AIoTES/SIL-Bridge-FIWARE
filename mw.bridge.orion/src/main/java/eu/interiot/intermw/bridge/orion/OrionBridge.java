@@ -42,6 +42,7 @@ import org.apache.jena.rdf.model.Model;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 
@@ -264,7 +265,7 @@ public class OrionBridge extends AbstractBridge {
 		try{
 			// Discover all the registered devices
 			String responseBody = OrionV2Utils.discoverEntities(BASE_PATH);
-			logger.info(responseBody);
+//			logger.info(responseBody);
 			FIWAREv2Translator translator = new FIWAREv2Translator();
 			// Create the model from the response JSON
 			Model translatedModel = translator.toJenaModel(responseBody);
@@ -274,6 +275,7 @@ public class OrionBridge extends AbstractBridge {
 			responseMessage.setPayload(responsePayload);
 			// Set the OK status
 			responseMessage.getMetadata().setStatus("OK");
+			String conversationId = message.getMetadata().getConversationId().orElse(null);
 			
 			/// Initialize device registry
 			Message deviceRegistryInitializeMessage = new Message();
@@ -281,13 +283,36 @@ public class OrionBridge extends AbstractBridge {
             metadata.initializeMetadata();
             metadata.addMessageType(URIManagerMessageMetadata.MessageTypesEnum.DEVICE_REGISTRY_INITIALIZE);
             metadata.setSenderPlatformId(new EntityID(platform.getPlatformId()));
-//            metadata.setConversationId(conversationId); 
-            MessagePayload devicePayload = new MessagePayload(translatedModel);
+            metadata.setConversationId(conversationId); 
+//            MessagePayload devicePayload = new MessagePayload(translatedModel);
             
             deviceRegistryInitializeMessage.setMetadata(metadata);
-            deviceRegistryInitializeMessage.setPayload(devicePayload);
+//            deviceRegistryInitializeMessage.setPayload(devicePayload);
+            deviceRegistryInitializeMessage.setPayload(new MessagePayload());
             publisher.publish(deviceRegistryInitializeMessage);
             logger.debug("Device_Registry_Initialize message has been published upstream.");
+            
+            // Add devices
+            JsonParser parser = new JsonParser();
+			JsonArray devices = parser.parse(responseBody).getAsJsonArray();
+			for(int i = 0; i < devices.size(); i++){
+				Message addDeviceMessage = new Message();
+				PlatformMessageMetadata metadata2 = new MessageMetadata().asPlatformMessageMetadata();
+	            metadata2.initializeMetadata();
+	            metadata2.addMessageType(URIManagerMessageMetadata.MessageTypesEnum.DEVICE_ADD_OR_UPDATE);
+	            metadata2.setSenderPlatformId(new EntityID(platform.getPlatformId()));
+	            metadata2.setConversationId(conversationId); 
+	            // Create a new message payload with the information about the device
+	            Model deviceModel = translator.toJenaModel(devices.get(i).getAsJsonObject().toString());
+	    		MessagePayload devicePayload = new MessagePayload(deviceModel);
+	            
+	            addDeviceMessage.setMetadata(metadata2);
+	            addDeviceMessage.setPayload(devicePayload);
+	            
+	            publisher.publish(addDeviceMessage);
+	            logger.debug("Device_Add_Or_Update message has been published upstream.");
+			}
+			logger.debug(devices.size() + " new devices have been added to the registry");
             
             // TODO: KEEP DEVICE REGISTRY UP TO DATE
 			
