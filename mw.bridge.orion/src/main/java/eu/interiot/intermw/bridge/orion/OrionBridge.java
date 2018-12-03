@@ -61,6 +61,7 @@ import eu.interiot.message.exceptions.payload.PayloadException;
 import eu.interiot.message.managers.URI.URIManagerMessageMetadata;
 import eu.interiot.message.managers.URI.URIManagerMessageMetadata.MessageTypesEnum;
 import eu.interiot.message.metadata.PlatformMessageMetadata;
+import eu.interiot.message.payload.types.IoTDevicePayload;
 import eu.interiot.translators.syntax.FIWARE.FIWAREv2Translator;
 import spark.Request;
 import spark.Spark;
@@ -267,12 +268,6 @@ public class OrionBridge extends AbstractBridge {
 			String responseBody = OrionV2Utils.discoverEntities(BASE_PATH);
 //			logger.info(responseBody);
 			FIWAREv2Translator translator = new FIWAREv2Translator();
-			// Create the model from the response JSON
-			Model translatedModel = translator.toJenaModel(responseBody);
-			// Create a new message payload for the response message
-			MessagePayload responsePayload = new MessagePayload(translatedModel);
-			// Attach the payload to the message
-			responseMessage.setPayload(responsePayload);
 			// Set the OK status
 			responseMessage.getMetadata().setStatus("OK");
 			String conversationId = message.getMetadata().getConversationId().orElse(null);
@@ -330,11 +325,11 @@ public class OrionBridge extends AbstractBridge {
 	public Message query(Message message) {
 		Message responseMessage = createResponseMessage(message);
 		try{
-			Set<String> deviceIds = OrionV2Utils.getPlatformIds(message);
-			for(String deviceId : deviceIds){
-				String responseBody = OrionV2Utils.queryEntityById(BASE_PATH, deviceId);
-				logger.info(responseBody);	
-				//String responseBody = response.getEntity().getContent().toString();
+			IoTDevicePayload reqIoTDevicePayload = message.getPayloadAsGOIoTPPayload().asIoTDevicePayload();
+	        Set<EntityID> reqIoTDevices = reqIoTDevicePayload.getIoTDevices();
+	        if (reqIoTDevices.isEmpty()) {
+	        	String responseBody = OrionV2Utils.discoverEntities(BASE_PATH);
+//				logger.info(responseBody);
 				FIWAREv2Translator translator = new FIWAREv2Translator();
 				// Create the model from the response JSON
 				Model translatedModel = translator.toJenaModel(responseBody);
@@ -342,11 +337,30 @@ public class OrionBridge extends AbstractBridge {
 				MessagePayload responsePayload = new MessagePayload(translatedModel);
 				// Attach the payload to the message
 				responseMessage.setPayload(responsePayload);
+	        }else{
+//			Set<String> deviceIds = OrionV2Utils.getPlatformIds(message);
+//			for(String deviceId : deviceIds){
+//	        	IoTDevicePayload resIoTDevicePayload = responseMessage.getPayloadAsGOIoTPPayload().asIoTDevicePayload();
+	            
+	            for (EntityID reqIoTDevice : reqIoTDevices) {
+	            	String deviceId = reqIoTDevice.toString();
+	            	String responseBody = OrionV2Utils.queryEntityById(BASE_PATH, deviceId);
+
+	            	//String responseBody = response.getEntity().getContent().toString();
+	            	FIWAREv2Translator translator = new FIWAREv2Translator();
+	            	// Create the model from the response JSON
+	            	if (responseBody.startsWith("[")) responseBody=responseBody.substring(1, responseBody.length()-1); // JSON object, not JSON array
+	            	logger.info(responseBody);	
+	            	Model translatedModel = translator.toJenaModel(responseBody);
+	            	// Create a new message payload for the response message
+	            	MessagePayload responsePayload = new MessagePayload(translatedModel);
+	            	// Attach the payload to the message
+	            	responseMessage.setPayload(responsePayload);
+	            }
 			}
 			// Set the OK status
 			responseMessage.getMetadata().setStatus("OK");
-			// Publish the message to INTER-MW. The publisher is global (and it is tested)
-			publisher.publish(responseMessage);
+			logger.debug(responseMessage.serializeToJSONLD());
 		}
 		catch (Exception e) {
 			logger.error("Error in query: " + e.getMessage());
