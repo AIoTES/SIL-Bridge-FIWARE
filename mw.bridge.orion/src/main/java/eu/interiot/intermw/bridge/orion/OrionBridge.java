@@ -28,7 +28,9 @@ import java.nio.file.Paths;
 import java.security.KeyStore;
 import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -72,7 +74,7 @@ public class OrionBridge extends AbstractBridge {
 //	private final static String PROPERTIES_PREFIX = "orion-";
 	private String BASE_PATH;
 	private String callbackAddress;
-	private Map<String,String> subscriptionIds = new HashMap<String,String>();
+	private Map<String, List<String>> subscriptionIds = new HashMap<String,List<String>>();
 
 	private final Logger logger = LoggerFactory.getLogger(OrionBridge.class);
 	
@@ -93,7 +95,6 @@ public class OrionBridge extends AbstractBridge {
 			callbackAddress = this.bridgeCallbackUrl.toString(); // Same base callback address for all bridges
 		
 			// Raise the server
-//			String callbackAddress = configuration.getProperty("bridge.callback.subscription.context");
 //			get(callbackAddress, (req, res) -> testServerGet(req));
 //			post(callbackAddress,(req, res) -> publishObservationToIntermw(req));
 			OrionV2Utils.service = configuration.getProperty("service");
@@ -453,42 +454,54 @@ public class OrionBridge extends AbstractBridge {
 			
 			if (entities.isEmpty()) {
 	            throw new PayloadException("No entities of type Device found in the Payload.");
-	        } else if (entities.size() > 1) {
-	            throw new PayloadException("Only one device is supported by Subscribe operation.");
-	        }
+	        } 
 			
-			String thingId = entities.iterator().next();
+			JsonParser parser = new JsonParser();
+			
 		    String conversationId = message.getMetadata().getConversationId().orElse(null);
-		    logger.debug("Subscribing to thing {} using conversationId {}...", thingId, conversationId);
-			
-		    JsonParser parser = new JsonParser();
-		    JsonObject subjectObject = parser.parse(OrionV2Utils.buildJsonWithIds(thingId)).getAsJsonObject();
-		    JsonObject urlObject = new JsonObject();
-		    JsonObject notificationObject = new JsonObject();
-		    notificationObject.add("http", urlObject);
-		    JsonObject subscription = new JsonObject();
-		    subscription.add("subject", subjectObject);
-		    subscription.add("notification", notificationObject);
-		    String requestBody = subscription.toString();
+		    logger.debug("Subscribing to things using conversationId {}...", conversationId);
+		    List<String> subIds = new ArrayList<String>();
+		    
+		    for (String deviceId : entities) {
+			    JsonObject subjectObject = parser.parse(OrionV2Utils.buildJsonWithIds(deviceId)).getAsJsonObject();
+			    JsonObject urlObject = new JsonObject();
+			    JsonObject notificationObject = new JsonObject();
+			    notificationObject.add("http", urlObject);
+			    JsonObject subscription = new JsonObject();
+			    subscription.add("subject", subjectObject);
+			    subscription.add("notification", notificationObject);
+			    String requestBody = subscription.toString();
+			    
+			    // Change the message callback address of the body for the address where the bridge is listening after a subscription 
+				requestBody = OrionV2Utils.buildJsonWithUrl(requestBody, callbackAddress.concat("/" + conversationId));
+				
+				// Create the subscription
+				String responseBody = OrionV2Utils.createSubscription(BASE_PATH, requestBody);
+				
+				String subscriptionId = parser.parse(responseBody).getAsJsonObject().get("id").getAsString();
+				// Keep track of the subscription ids
+				if(subscriptionId != null) subIds.add(subscriptionId);
+				//Test
+				if(testMode && testResultFilePath != null && testResultFileName != null){
+					OutputStream os = new FileOutputStream(Paths.get(Paths.get(".").toAbsolutePath().normalize().toString() + "/" + testResultFilePath + testResultFileName).toString());
+					os.write(responseBody.getBytes());
+					os.flush();
+					os.close();
+				}
+		    }
+		    
+		    subscriptionIds.put(conversationId, subIds); // SUBSCRIPTION ID IS NEEDED FOR UNSUBSCRIBE METHOD. UNSUBSCRIBE MESSAGE CONTAINS CONVERSATIONID
 												
-			// Change the message callback address of the body for the address where the bridge is listening after a subscription 
-			requestBody = OrionV2Utils.buildJsonWithUrl(requestBody, callbackAddress.concat("/" + conversationId));
-			
-			// Create the subscription
-			String responseBody = OrionV2Utils.createSubscription(BASE_PATH, requestBody);
 			// Get the Model from the response
-			Model translatedModel = translator.toJenaModel(responseBody);			
+//			Model translatedModel = translator.toJenaModel(responseBody);			
 			// Create a new message payload for the response message
-			MessagePayload responsePayload = new MessagePayload(translatedModel);
+//			MessagePayload responsePayload = new MessagePayload(translatedModel);
 			// Attach the payload to the message
-			responseMessage.setPayload(responsePayload);
+//			responseMessage.setPayload(responsePayload);
 			// Set OK status
-			responseMessage.getMetadata().setStatus("OK");
+//			responseMessage.getMetadata().setStatus("OK");
 			// If test, save the subscription id in order to be able to unsubscribe
-			
-			String subscriptionId = parser.parse(responseBody).getAsJsonObject().get("id").getAsString();
-			subscriptionIds.put(conversationId, subscriptionId); // SUBSCRIPTION ID IS NEEDED FOR UNSUBSCRIBE METHOD. UNSUBSCRIBE MESSAGE CONTAINS CONVERSATIONID
-			
+						
 			Spark.post(conversationId, (req, response) -> { // SOFIA2 sends data using a HTTP PUT query
 				 Message callbackMessage = new Message();
 		         try{
@@ -520,12 +533,7 @@ public class OrionBridge extends AbstractBridge {
 		         return "200-OK";
 	        });
 			
-			if(testMode && testResultFilePath != null && testResultFileName != null){
-				OutputStream os = new FileOutputStream(Paths.get(Paths.get(".").toAbsolutePath().normalize().toString() + "/" + testResultFilePath + testResultFileName).toString());
-				os.write(responseBody.getBytes());
-				os.flush();
-				os.close();
-			}
+
 		}
 		catch (Exception e){ 
 			logger.error("Error subscribing: " + e.getMessage());
@@ -542,9 +550,18 @@ public class OrionBridge extends AbstractBridge {
 		try{
 			String conversationId = message.getMetadata().asPlatformMessageMetadata().getSubscriptionId().get();
 			logger.info("Unsubscribing from things in conversation {}...", conversationId);
-			String subId = subscriptionIds.get(conversationId); // RETRIEVE SUBSCRIPTION IDs
-			String responseBody = OrionV2Utils.removeSubscription(BASE_PATH, subId);
+			
+			List<String> subId = subscriptionIds.get(conversationId); // RETRIEVE SUBSCRIPTION IDs
+			for (String subscriptionId : subId){
+				try{
+					OrionV2Utils.removeSubscription(BASE_PATH, subscriptionId);
+				}catch (Exception e){ // FIXME: The server sometimes returns a 500 code. It's probably a bug
+					logger.error("Error unsubscribing: " + e.getMessage());
+					e.printStackTrace();
+				}
+			}
 			subscriptionIds.remove(conversationId);
+			
 			responseMessage.getMetadata().setStatus("OK");
 		}
 		catch (Exception e){ 
