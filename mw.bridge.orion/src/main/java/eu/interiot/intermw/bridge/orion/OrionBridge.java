@@ -354,9 +354,10 @@ public class OrionBridge extends AbstractBridge {
 	            	logger.info(responseBody);	
 	            	Model translatedModel = translator.toJenaModel(responseBody);
 	            	// Create a new message payload for the response message
-	            	MessagePayload responsePayload = new MessagePayload(translatedModel);
+//	            	MessagePayload responsePayload = new MessagePayload(translatedModel);
 	            	// Attach the payload to the message
-	            	responseMessage.setPayload(responsePayload);
+//	            	responseMessage.setPayload(responsePayload);
+	            	responseMessage.getPayload().getJenaModel().add(translatedModel);
 	            }
 			}
 			// Set the OK status

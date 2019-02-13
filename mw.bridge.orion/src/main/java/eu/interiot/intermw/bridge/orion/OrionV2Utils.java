@@ -133,7 +133,8 @@ public class OrionV2Utils {
 	}
 	
     private static String postToFiware(String url, String body) throws IOException{   	
-    	    	
+    	// Todo: set service and servicePath as input parameters
+    	
 		if(customSslContext == null)  httpClient = HttpClientBuilder.create().build();
 		else httpClient = HttpClientBuilder.create().setSSLContext(customSslContext).build();
         HttpPost httpPost = new HttpPost(url);        
