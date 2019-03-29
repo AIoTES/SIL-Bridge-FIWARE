@@ -50,6 +50,7 @@ import com.google.gson.JsonParser;
 
 import eu.interiot.intermw.bridge.BridgeConfiguration;
 import eu.interiot.intermw.bridge.abstracts.AbstractBridge;
+import eu.interiot.intermw.comm.broker.exceptions.BrokerException;
 import eu.interiot.intermw.commons.exceptions.MiddlewareException;
 import eu.interiot.intermw.commons.model.IoTDevice;
 import eu.interiot.intermw.commons.model.Platform;
@@ -74,7 +75,7 @@ public class OrionBridge extends AbstractBridge {
 //	private final static String PROPERTIES_PREFIX = "orion-";
 	private String BASE_PATH;
 	private String callbackAddress;
-	private Map<String, List<String>> subscriptionIds = new HashMap<String,List<String>>();
+	private Map<String, List<String[]>> subscriptionIds = new HashMap<String,List<String[]>>();
 
 	private final Logger logger = LoggerFactory.getLogger(OrionBridge.class);
 	
@@ -85,6 +86,11 @@ public class OrionBridge extends AbstractBridge {
 	// TrustStore for self-signed certificates
     private String trustStore;
 	private String trustStorePass;
+	
+	// Discovery
+	private String[] types;
+	private String[] services;
+	private List<String[]> discoverySubscriptions = new ArrayList<String[]>();
 
 	public OrionBridge(BridgeConfiguration configuration, Platform platform) throws MiddlewareException {
 		super(configuration, platform);
@@ -98,6 +104,25 @@ public class OrionBridge extends AbstractBridge {
 //			get(callbackAddress, (req, res) -> testServerGet(req));
 //			post(callbackAddress,(req, res) -> publishObservationToIntermw(req));
 
+			// Discovery
+			String entityTypes = configuration.getProperty("entityTypes");
+			String definedServices = configuration.getProperty("services");
+			
+			if(entityTypes != null){
+				types = entityTypes.replaceAll(" ", "").split(",");
+			} else{
+				// Disable discovery if types == null or try to discover every entity?
+				types = null;
+			}
+			
+			if(definedServices != null){
+				services = definedServices.replaceAll(" ", "").split(",");
+			} else{
+				// Use only default Fiware Service
+				services = new String[]{""};
+			}
+					
+			
 			// For self-signed certificates
 		    trustStore = configuration.getProperty("certificate");
 	        trustStorePass = configuration.getProperty("certificate-password");
@@ -105,6 +130,7 @@ public class OrionBridge extends AbstractBridge {
 			// Authentication token
 //			OrionV2Utils.token = platform.getEncryptedPassword(); 
 			OrionV2Utils.token = configuration.getProperty("token");; // TODO: improve this
+			
 		} catch (Exception e) {
 		    throw new MiddlewareException(
 				    "Failed to read UAALBridge configuration: "
@@ -132,6 +158,7 @@ public class OrionBridge extends AbstractBridge {
 	@Override
 	public Message unregisterPlatform(Message message) {
 		Message responseMessage = createResponseMessage(message);
+		stopDeviceDiscovery();
 		logger.info("Unregistering platform {}...", OrionV2Utils.getPlatformId(platform));
 		logger.info("Platform {} has been unregistered.", OrionV2Utils.getPlatformId(platform));
 		responseMessage.getMetadata().setStatus("OK");
@@ -275,63 +302,35 @@ public class OrionBridge extends AbstractBridge {
 		// TODO: UPDATE DISCOVERY QUERY (and update registry with new devices)
 		Message responseMessage = createResponseMessage(message);
 		logger.debug("ListDevices started...");
-		try{
-			// Discover all the registered devices
-			String responseBody = OrionV2Utils.discoverEntities(BASE_PATH);
-//			logger.info(responseBody);
-			FIWAREv2Translator translator = new FIWAREv2Translator();
-			// Set the OK status
-			responseMessage.getMetadata().setStatus("OK");
-			String conversationId = message.getMetadata().getConversationId().orElse(null);
-			
-			/// Initialize device registry
-			Message deviceRegistryInitializeMessage = new Message();
-			PlatformMessageMetadata metadata = new MessageMetadata().asPlatformMessageMetadata();
-            metadata.initializeMetadata();
-            metadata.addMessageType(URIManagerMessageMetadata.MessageTypesEnum.DEVICE_REGISTRY_INITIALIZE);
-            metadata.setSenderPlatformId(new EntityID(platform.getPlatformId()));
-            metadata.setConversationId(conversationId); 
-//            MessagePayload devicePayload = new MessagePayload(translatedModel);
-            
-            deviceRegistryInitializeMessage.setMetadata(metadata);
-//            deviceRegistryInitializeMessage.setPayload(devicePayload);
-            deviceRegistryInitializeMessage.setPayload(new MessagePayload());
-            publisher.publish(deviceRegistryInitializeMessage);
-            logger.debug("Device_Registry_Initialize message has been published upstream.");
-            
-            // Add devices
-            JsonParser parser = new JsonParser();
-			JsonArray devices = parser.parse(responseBody).getAsJsonArray();
-			for(int i = 0; i < devices.size(); i++){
-				Message addDeviceMessage = new Message();
-				PlatformMessageMetadata metadata2 = new MessageMetadata().asPlatformMessageMetadata();
-	            metadata2.initializeMetadata();
-	            metadata2.addMessageType(URIManagerMessageMetadata.MessageTypesEnum.DEVICE_ADD_OR_UPDATE);
-	            metadata2.setSenderPlatformId(new EntityID(platform.getPlatformId()));
-	            metadata2.setConversationId(conversationId); 
-	            // Create a new message payload with the information about the device
-	            JsonObject deviceObject = devices.get(i).getAsJsonObject();
-	            deviceObject = OrionV2Utils.setDeviceId(deviceObject, null, null); // TODO: add service and servicePath
-	            Model deviceModel = translator.toJenaModel(deviceObject.toString());	            
-	    		MessagePayload devicePayload = new MessagePayload(deviceModel);
-	            
-	            addDeviceMessage.setMetadata(metadata2);
-	            addDeviceMessage.setPayload(devicePayload);
-	            
-	            publisher.publish(addDeviceMessage);
-	            logger.debug("Device_Add_Or_Update message has been published upstream.");
-			}
-			logger.debug(devices.size() + " new devices have been added to the registry");
-            
-            // TODO: KEEP DEVICE REGISTRY UP TO DATE
-			
-		}
-		catch (Exception e) {
-			logger.error("Error in query: " + e.getMessage());
-			responseMessage.getMetadata().setStatus("KO");
-			responseMessage.getMetadata().setMessageType(MessageTypesEnum.ERROR);
-			responseMessage.getMetadata().asErrorMessageMetadata().setExceptionStackTrace(e);
-		}
+		String conversationId = message.getMetadata().getConversationId().orElse(null);
+		
+		if(types != null){
+			try{
+				/// Initialize device registry
+				Message deviceRegistryInitializeMessage = new Message();
+				PlatformMessageMetadata metadata = new MessageMetadata().asPlatformMessageMetadata();
+		        metadata.initializeMetadata();
+		        metadata.addMessageType(URIManagerMessageMetadata.MessageTypesEnum.DEVICE_REGISTRY_INITIALIZE);
+		        metadata.setSenderPlatformId(new EntityID(platform.getPlatformId()));
+//		        metadata.setConversationId(conversationId); 
+//		        MessagePayload devicePayload = new MessagePayload(translatedModel);
+		        
+		        deviceRegistryInitializeMessage.setMetadata(metadata);
+//		        deviceRegistryInitializeMessage.setPayload(devicePayload);
+		        deviceRegistryInitializeMessage.setPayload(new MessagePayload());
+		        publisher.publish(deviceRegistryInitializeMessage);
+		        logger.debug("Device_Registry_Initialize message has been published upstream.");
+				
+				// Start device discovery
+				deviceDiscovery(conversationId);
+				responseMessage.getMetadata().setStatus("OK");
+			} catch (Exception e) {
+				logger.error("Error in query: " + e.getMessage());
+				responseMessage.getMetadata().setStatus("KO");
+				responseMessage.getMetadata().setMessageType(MessageTypesEnum.ERROR);
+				responseMessage.getMetadata().asErrorMessageMetadata().setExceptionStackTrace(e);
+			}		
+		}		
 		return responseMessage;
 	}
 	
@@ -496,7 +495,7 @@ public class OrionBridge extends AbstractBridge {
 			
 		    String conversationId = message.getMetadata().getConversationId().orElse(null);
 		    logger.debug("Subscribing to things using conversationId {}...", conversationId);
-		    List<String> subIds = new ArrayList<String>();
+		    List<String[]> subIds = new ArrayList<String[]>();
 		    Map<String, String> completeIds = new HashMap<String,String>();
 		    
 		    for (String deviceId : entities) {
@@ -510,6 +509,7 @@ public class OrionBridge extends AbstractBridge {
 			    JsonObject subscription = new JsonObject();
 			    subscription.add("subject", subjectObject);
 			    subscription.add("notification", notificationObject);
+			    // TODO: add "expires" attribute
 			    String requestBody = subscription.toString();
 			    
 			    // Change the message callback address of the body for the address where the bridge is listening after a subscription 
@@ -521,7 +521,7 @@ public class OrionBridge extends AbstractBridge {
 				String subscriptionId = parser.parse(responseBody).getAsJsonObject().get("id").getAsString();
 				// Keep track of the subscription ids
 				if(subscriptionId != null){
-					subIds.add(subscriptionId);
+					subIds.add(new String[]{subscriptionId, entityID[2]}); // Subscription Id and Service
 					completeIds.put(subscriptionId, deviceId); // Full device id for translated messages
 				} 
 				//Test
@@ -588,11 +588,13 @@ public class OrionBridge extends AbstractBridge {
 		try{
 			String conversationId = message.getMetadata().asPlatformMessageMetadata().getSubscriptionId().get();
 			logger.info("Unsubscribing from things in conversation {}...", conversationId);
-			
-			List<String> subId = subscriptionIds.get(conversationId); // RETRIEVE SUBSCRIPTION IDs
-			for (String subscriptionId : subId){
+						
+			List<String[]> subId = subscriptionIds.get(conversationId); // RETRIEVE SUBSCRIPTION IDs AND SERVICES
+			for (String[] subscription : subId){
+				String subscriptionId = subscription[0];
+				String service = subscription[1];
 				try{
-					OrionV2Utils.removeSubscription(BASE_PATH, subscriptionId);
+					OrionV2Utils.removeSubscription(BASE_PATH, subscriptionId, service, "");
 				}catch (Exception e){
 					logger.error("Error unsubscribing: " + e.getMessage());
 					e.printStackTrace();
@@ -711,6 +713,95 @@ public class OrionBridge extends AbstractBridge {
 			
     }
 	
+    
+    private void deviceDiscovery(String conversationId) throws Exception{
+			// Discover all the registered devices
+//			String responseBody = OrionV2Utils.discoverEntities(BASE_PATH);
+//			logger.info(responseBody);
+			FIWAREv2Translator translator = new FIWAREv2Translator();
+            JsonParser parser = new JsonParser();
+            
+            // Create subscriptions by service and entity type
+            for (String service : services) {
+            	for (String type : types) {
+            		JsonObject subjectObject = parser.parse(OrionV2Utils.buildJsonWithTypes(type)).getAsJsonObject();
+            		JsonObject urlObject = new JsonObject();
+            		JsonObject notificationObject = new JsonObject();
+            		notificationObject.add("http", urlObject);
+            		JsonObject subscription = new JsonObject();
+            		subscription.add("subject", subjectObject);
+            		subscription.add("notification", notificationObject);
+            		// TODO: add "expires" attribute
+            		String requestBody = subscription.toString();
+            		
+            		// Change the message callback address of the body for the address where the bridge is listening after a subscription 
+            		requestBody = OrionV2Utils.buildJsonWithUrl(requestBody, callbackAddress.concat("/" + conversationId));
+            		
+            		// Create the subscription
+            		String responseBody = OrionV2Utils.createSubscription(BASE_PATH, requestBody, service, ""); // Any sevicePath
+				
+            		String subscriptionId = parser.parse(responseBody).getAsJsonObject().get("id").getAsString();
+            		// Keep track of the subscription ids
+            		if(subscriptionId != null){
+						discoverySubscriptions.add(new String[]{subscriptionId, service});
+            		} 
+            	}
+            }
+            
+            // Add devices and keep device registry up to date
+			Spark.post(conversationId, (req, response) -> { // Unique endpoint
+		         try{
+		        	JsonObject bodyObject = parser.parse(req.body()).getAsJsonObject();
+		        	JsonArray devices = bodyObject.get("data").getAsJsonArray();
+		        	String responseService = req.headers("Fiware-Service");
+		        	String responseServicePath = req.headers("Fiware-ServicePath");
+		        	String[] servicePath = responseServicePath.split(","); // List of servicePath values
+		 			for(int i = 0; i < devices.size(); i++){
+		 				String path;
+		 				if(servicePath.length > 1)	path = servicePath[i];
+		 				else path = servicePath[0];
+		 				// Metadata
+						Message addDeviceMessage = new Message();
+						PlatformMessageMetadata metadata = new MessageMetadata().asPlatformMessageMetadata();
+			            metadata.initializeMetadata();
+			            metadata.addMessageType(URIManagerMessageMetadata.MessageTypesEnum.DEVICE_ADD_OR_UPDATE);
+			            metadata.setSenderPlatformId(new EntityID(platform.getPlatformId()));
+//			            metadata2.setConversationId(conversationId); 
+			            // Create a new message payload with the information about the device
+			            JsonObject deviceObject = devices.get(i).getAsJsonObject();
+			            deviceObject = OrionV2Utils.setDeviceId(deviceObject, responseService, path);
+			            Model deviceModel = translator.toJenaModel(deviceObject.toString());	            
+			    		MessagePayload devicePayload = new MessagePayload(deviceModel);
+			            
+			            addDeviceMessage.setMetadata(metadata);
+			            addDeviceMessage.setPayload(devicePayload);
+			            
+			            publisher.publish(addDeviceMessage);
+			            logger.debug("Device_Add_Or_Update message has been published upstream.");
+					}
+					logger.debug(devices.size() + " new devices have been added to the registry");
+		         }
+		         catch(Exception e){
+		        	 return "500-KO";
+		         }
+		         return "200-OK";
+	        });
+    }
+    
+    private void stopDeviceDiscovery(){
+    	// Remove subscriptions
+    	for (String[] subscription : discoverySubscriptions){
+    		String subscriptionId = subscription[0];
+    		String service = subscription[1];
+			try{
+				OrionV2Utils.removeSubscription(BASE_PATH, subscriptionId, service, "");
+			}catch (Exception e){
+				logger.error("Error unsubscribing: " + e.getMessage());
+				e.printStackTrace();
+			}
+		}
+    }
+    
 //	private String publishObservationToIntermw(Request req){
 //		 Message callbackMessage = new Message();
 //         try{

@@ -147,9 +147,9 @@ public class OrionV2Utils {
 		return buildJsonWithSubscriptionId(postToFiware(completeUrl, body, service, servicePath)); 
 	}
 
-	public static String removeSubscription(String baseUrl, String subscriptionId) throws IOException {
+	public static String removeSubscription(String baseUrl, String subscriptionId, String service, String servicePath) throws IOException {
 		String completeUrl = baseUrl + FIWARE_ENTITY_UNSUBSCRIBE+"/"+subscriptionId;
-		return deleteInFiware(completeUrl, "", ""); 
+		return deleteInFiware(completeUrl, service, servicePath); 
 	}
 	
     private static String postToFiware(String url, String body, String service, String servicePath) throws IOException{   	
@@ -367,6 +367,22 @@ public class OrionV2Utils {
         	JsonObject jsonObjectId = new JsonObject(); 
         	jsonObjectId.addProperty("id", transformedID);  
         	// TODO: add type
+        	jsonArray.add(jsonObjectId);        	
+		}    	
+    	jsonObjectFinal.add("entities", jsonArray);
+    	
+    	return jsonObjectFinal.toString();
+    }
+    
+    public static String buildJsonWithTypes(String... entityType){
+    	JsonObject jsonObjectFinal = new JsonObject();
+    	JsonArray jsonArray = new JsonArray();
+    	for (String type : entityType) {
+    		
+        	JsonObject jsonObjectId = new JsonObject(); 
+        	jsonObjectId.addProperty("idPattern", ".*");
+        	jsonObjectId.addProperty("type", type);  
+        	// Add idPattern?
         	jsonArray.add(jsonObjectId);        	
 		}    	
     	jsonObjectFinal.add("entities", jsonArray);
