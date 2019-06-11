@@ -638,8 +638,8 @@ public class OrionBridge extends AbstractBridge {
 	}
 	
 	private String testServerGet(Request req){
-		logger.info("Petición get recibida");
-		return "Petición get recibida";
+		logger.info("GET request received");
+		return "GET request received";
 	}
 		
 	// For self-signed certificates
