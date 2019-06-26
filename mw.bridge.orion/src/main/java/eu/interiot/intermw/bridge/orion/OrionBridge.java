@@ -18,9 +18,6 @@
  */
 package eu.interiot.intermw.bridge.orion;
 
-import static spark.Spark.get;
-import static spark.Spark.post;
-
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.OutputStream;
@@ -30,7 +27,6 @@ import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -50,7 +46,6 @@ import com.google.gson.JsonParser;
 
 import eu.interiot.intermw.bridge.BridgeConfiguration;
 import eu.interiot.intermw.bridge.abstracts.AbstractBridge;
-import eu.interiot.intermw.comm.broker.exceptions.BrokerException;
 import eu.interiot.intermw.commons.exceptions.MiddlewareException;
 import eu.interiot.intermw.commons.model.IoTDevice;
 import eu.interiot.intermw.commons.model.Platform;
@@ -133,7 +128,7 @@ public class OrionBridge extends AbstractBridge {
 			
 		} catch (Exception e) {
 		    throw new MiddlewareException(
-				    "Failed to read UAALBridge configuration: "
+				    "Failed to read Fiware Bridge configuration: "
 					    + e.getMessage());
 			}
 	}
@@ -183,38 +178,46 @@ public class OrionBridge extends AbstractBridge {
 		
 	@Override
 	public Message platformCreateDevices(Message message) {
-		// TODO: use FIware translator
 		// TODO: test with semantic translation
 		Message responseMessage = createResponseMessage(message);
 		try {
 			logger.info("Creating devices...");
-			FIWAREv2Translator translator = new FIWAREv2Translator();
-//			String body = translator.toFormatX(message.getPayload().getJenaModel());
-			
 			PlatformCreateDeviceReq req = new PlatformCreateDeviceReq(message);
-			// TODO: FIND A BETTER WAY TO DO THIS
-			for (IoTDevice iotDevice : req.getDevices()) {
-	            logger.debug("Sending create-device (start-to-manage) request to the platform for device {}...", iotDevice.getDeviceId());
-	            
-	            String thingId = iotDevice.getDeviceId();
-			    String[] entityID = OrionV2Utils.filterThingID(thingId);
-	        	String transformedID = entityID[0];
-			    String type = entityID[1];
-			    
-	        	JsonObject deviceObject = new JsonObject(); 
-	        	deviceObject.addProperty("id", transformedID);
-	        	deviceObject.addProperty("type", type);
-	            OrionV2Utils.registerEntity(BASE_PATH, deviceObject.toString(), entityID[2], entityID[3]);
-				logger.info("Device {} has been created.", thingId);
-	        }
-						
-//			String responseBody = OrionV2Utils.registerEntity(BASE_PATH, body);			
-			// Get the Model from the response
-//			Model translatedModel = translator.toJenaModel(responseBody);			
-			// Create a new message payload for the response message
-//			MessagePayload responsePayload = new MessagePayload(translatedModel);
-			// Attach the payload to the message
-//			responseMessage.setPayload(responsePayload);
+			if(req.getDevices()==null || req.getDevices().isEmpty()){
+				// Translated message. Create entities in Orion
+				FIWAREv2Translator translator = new FIWAREv2Translator();
+				String body = translator.toFormatX(message.getPayload().getJenaModel());
+				// Get data from deviceId and send request to Fiware
+				JsonParser parser = new JsonParser();
+				JsonArray devices = parser.parse(body).getAsJsonArray();
+				for(int i = 0; i<devices.size(); i++){
+					JsonObject device = devices.get(i).getAsJsonObject();
+					String thingId = device.get("id").getAsString();
+				    String[] entityID = OrionV2Utils.filterThingID(thingId);
+		        	String transformedID = entityID[0];
+//				    String type = entityID[1];
+				    device.addProperty("id", transformedID); // Replace deviceId by entityId
+				    OrionV2Utils.registerEntity(BASE_PATH, device.toString(), entityID[2], entityID[3]);
+					logger.info("Device {} has been created.", thingId);
+				}
+			}else{
+				// No semantic translation
+				// TODO: FIND A BETTER WAY TO DO THIS
+				for (IoTDevice iotDevice : req.getDevices()) {
+		            logger.debug("Sending create-device (start-to-manage) request to the platform for device {}...", iotDevice.getDeviceId());
+		            
+		            String thingId = iotDevice.getDeviceId();
+				    String[] entityID = OrionV2Utils.filterThingID(thingId);
+		        	String transformedID = entityID[0];
+				    String type = entityID[1];
+				    
+		        	JsonObject deviceObject = new JsonObject(); 
+		        	deviceObject.addProperty("id", transformedID);
+		        	deviceObject.addProperty("type", type);
+		            OrionV2Utils.registerEntity(BASE_PATH, deviceObject.toString(), entityID[2], entityID[3]);
+					logger.info("Device {} has been created.", thingId);
+		        }
+			}
 			responseMessage.getMetadata().setStatus("OK");
 		} 
 		catch (Exception e) {
