@@ -29,6 +29,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Properties;
 import java.util.Set;
 
 import javax.net.ssl.SSLContext;
@@ -90,6 +91,7 @@ public class OrionBridge extends AbstractBridge {
 	public OrionBridge(BridgeConfiguration configuration, Platform platform) throws MiddlewareException {
 		super(configuration, platform);
 		try{
+			Properties properties = configuration.getProperties();
 			String url = platform.getBaseEndpoint().toString(); // Get base path from the Register Platform message
 			if (url.endsWith("/")) url = url.substring(0, url.length()-1); // Just in case
 			BASE_PATH = url;
@@ -100,8 +102,8 @@ public class OrionBridge extends AbstractBridge {
 //			post(callbackAddress,(req, res) -> publishObservationToIntermw(req));
 
 			// Discovery
-			String entityTypes = configuration.getProperty("entityTypes");
-			String definedServices = configuration.getProperty("services");
+			String entityTypes = properties.getProperty("entityTypes");
+			String definedServices = properties.getProperty("services");
 			
 			if(entityTypes != null){
 				types = entityTypes.replaceAll(" ", "").split(",");
@@ -119,14 +121,16 @@ public class OrionBridge extends AbstractBridge {
 					
 			
 			// For self-signed certificates
-		    trustStore = configuration.getProperty("certificate");
-	        trustStorePass = configuration.getProperty("certificate-password");
+		    trustStore = properties.getProperty("certificate");
+	        trustStorePass = properties.getProperty("certificate-password");
 			if(BASE_PATH.startsWith("https") && trustStore != null) setCustomTrustStore(trustStore, trustStorePass);
 			// Authentication token
 //			OrionV2Utils.token = platform.getEncryptedPassword(); 
-			OrionV2Utils.token = configuration.getProperty("token");; // TODO: improve this
+			OrionV2Utils.token = properties.getProperty("token");; // TODO: improve this
+			OrionV2Utils.setDeviceIdPrefix(properties.getProperty("deviceIdPrefix","http://inter-iot.eu/dev/"));
 			
 		} catch (Exception e) {
+			e.printStackTrace();
 		    throw new MiddlewareException(
 				    "Failed to read Fiware Bridge configuration: "
 					    + e.getMessage());
@@ -222,6 +226,7 @@ public class OrionBridge extends AbstractBridge {
 		} 
 		catch (Exception e) {
 			logger.error("Error creating devices: " + e.getMessage());
+			e.printStackTrace();
 			responseMessage.getMetadata().setStatus("KO");
 			responseMessage.getMetadata().setMessageType(MessageTypesEnum.ERROR);
 			responseMessage.getMetadata().asErrorMessageMetadata().setExceptionStackTrace(e);
@@ -256,6 +261,7 @@ public class OrionBridge extends AbstractBridge {
 		} 
 		catch (Exception e) {
 			logger.error("Error removing devices: " + e.getMessage());
+			e.printStackTrace();
 			responseMessage.getMetadata().setStatus("KO");
 			responseMessage.getMetadata().setMessageType(MessageTypesEnum.ERROR);
 			responseMessage.getMetadata().asErrorMessageMetadata().setExceptionStackTrace(e);
@@ -292,6 +298,7 @@ public class OrionBridge extends AbstractBridge {
 			} 
 			catch (Exception e) {
 				logger.error("Error updating device {}: " + e.getMessage(), deviceId);
+				e.printStackTrace();
 				responseMessage.getMetadata().setStatus("KO");
 				responseMessage.getMetadata().setMessageType(MessageTypesEnum.ERROR);
 				responseMessage.getMetadata().asErrorMessageMetadata().setExceptionStackTrace(e);
@@ -329,6 +336,7 @@ public class OrionBridge extends AbstractBridge {
 				responseMessage.getMetadata().setStatus("OK");
 			} catch (Exception e) {
 				logger.error("Error in query: " + e.getMessage());
+				e.printStackTrace();
 				responseMessage.getMetadata().setStatus("KO");
 				responseMessage.getMetadata().setMessageType(MessageTypesEnum.ERROR);
 				responseMessage.getMetadata().asErrorMessageMetadata().setExceptionStackTrace(e);
@@ -390,6 +398,7 @@ public class OrionBridge extends AbstractBridge {
 		}
 		catch (Exception e) {
 			logger.error("Error in query: " + e.getMessage());
+			e.printStackTrace();
 			responseMessage.getMetadata().setStatus("KO");
 			responseMessage.getMetadata().setMessageType(MessageTypesEnum.ERROR);
 			responseMessage.getMetadata().asErrorMessageMetadata().setExceptionStackTrace(e);
@@ -424,6 +433,7 @@ public class OrionBridge extends AbstractBridge {
 			} 
 			catch (Exception e) {
 				logger.error("Error in actuate: " + e.getMessage());
+				e.printStackTrace();
 				responseMessage.getMetadata().setStatus("KO");
 				responseMessage.getMetadata().setMessageType(MessageTypesEnum.ERROR);
 				responseMessage.getMetadata().asErrorMessageMetadata().setExceptionStackTrace(e);
@@ -464,6 +474,7 @@ public class OrionBridge extends AbstractBridge {
 			} 
 			catch (Exception e) {
 				logger.error("Error in observe: " + e.getMessage());
+				e.printStackTrace();
 				responseMessage.getMetadata().setStatus("KO");
 				responseMessage.getMetadata().setMessageType(MessageTypesEnum.ERROR);
 				responseMessage.getMetadata().asErrorMessageMetadata().setExceptionStackTrace(e);
@@ -578,6 +589,7 @@ public class OrionBridge extends AbstractBridge {
 		}
 		catch (Exception e){ 
 			logger.error("Error subscribing: " + e.getMessage());
+			e.printStackTrace();
 			responseMessage.getMetadata().setStatus("KO");
 			responseMessage.getMetadata().setMessageType(MessageTypesEnum.ERROR);
 			responseMessage.getMetadata().asErrorMessageMetadata().setExceptionStackTrace(e);
@@ -609,6 +621,7 @@ public class OrionBridge extends AbstractBridge {
 		}
 		catch (Exception e){ 
 			logger.error("Error unsubscribing: " + e.getMessage());
+			e.printStackTrace();
 			responseMessage.getMetadata().setStatus("KO");
 			responseMessage.getMetadata().setMessageType(MessageTypesEnum.ERROR);
 			responseMessage.getMetadata().asErrorMessageMetadata().setExceptionStackTrace(e);

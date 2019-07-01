@@ -77,21 +77,26 @@ public class OrionV2Utils {
     public static final String EntityTypeSSNDevice = URIoldssn + "Device";
     
     public static final String propHasIdURI = FIWAREv2Translator.FIWAREbaseURI + "hasId";
-    public static final String deviceIdPrefix =  "http://inter-iot.eu/dev/"; // TODO: get value from Properties (?)
+    private static String deviceIdPrefix;  //Default value "http://inter-iot.eu/dev/"
         
     // Authentication
     static String token = null;
     static SSLContext customSslContext = null;
+    
+    public static void setDeviceIdPrefix(String prefix){
+    	if (!prefix.endsWith("/")) prefix = prefix + "/"; // Just in case
+    	deviceIdPrefix = prefix;
+    }
+    
+    public static String getDeviceIdPrefix(){
+    	return deviceIdPrefix;
+    }
     
 	public static String registerEntity(String baseUrl, String body, String service, String servicePath) throws IOException {
 		String completeUrl = baseUrl + FIWARE_ENTITY_REGISTER;
 		return postToFiware(completeUrl, body, service, servicePath);
 	}
 	
-//	public static String unregisterEntity(String baseUrl, String entityId, String service, String servicePath) throws IOException {
-//		String completeUrl = baseUrl + FIWARE_ENTITY_UNREGISTER+"/"+entityId;
-//		return deleteInFiware(completeUrl, service, servicePath); 
-//	}
 	
 	public static String unregisterEntity(String baseUrl, String entityId, String type, String service, String servicePath) throws IOException {
 		// Add entity type to avoid ambiguity
@@ -99,11 +104,6 @@ public class OrionV2Utils {
 		return deleteInFiware(completeUrl, service, servicePath); 
 	}
 	
-//	public static String updateEntity(String baseUrl, String entityId, String body, String service, String servicePath) throws IOException {
-//		String completeUrl = baseUrl + FIWARE_ENTITY_UPDATE + "/" + entityId + "/attrs" ;
-//		String completeBody = removeId(body);
-//		return putToFiware(completeUrl, completeBody, service, servicePath); 
-//	}
 	
 	public static String updateEntity(String baseUrl, String entityId, String type, String body, String service, String servicePath) throws IOException {
 		// Add entity type to avoid ambiguity
@@ -111,12 +111,7 @@ public class OrionV2Utils {
 		String completeBody = removeId(body);
 		return putToFiware(completeUrl, completeBody, service, servicePath); 
 	}
-	
-//	public static String publishEntityObservation(String baseUrl, String entityId ,String body, String service, String servicePath) throws IOException {
-//		String completeUrl = baseUrl + FIWARE_ENTITY_OBSERVATION+"/"+entityId+"/attrs";
-//		return postToFiware(completeUrl,body, service, servicePath);
-//	}
-	
+		
 	public static String publishEntityObservation(String baseUrl, String entityId, String type, String body, String service, String servicePath) throws IOException {
 		String completeUrl = baseUrl + FIWARE_ENTITY_OBSERVATION+"/"+entityId+"/attrs" + "?type=" + type;
 		return postToFiware(completeUrl,body, service, servicePath);
@@ -129,11 +124,6 @@ public class OrionV2Utils {
 	
 	//TODO Check ontology alignment with Pawel/Kasia
 	//TODO Build a shortcut to query a single entity by id
-//	public static String queryEntityById(String baseUrl, String entityId, String service, String servicePath) throws IOException {
-//		String completeUrl = baseUrl + FIWARE_ENTITY_QUERY;
-//		String body = buildJsonWithIds(entityId);
-//		return postToFiware(completeUrl, body, service, servicePath); 
-//	}
 	
 	public static String queryEntityById(String baseUrl, String entityId, String type, String service, String servicePath) throws IOException {
 		String completeUrl = baseUrl + FIWARE_ENTITY_QUERY;
