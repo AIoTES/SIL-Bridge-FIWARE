@@ -9,12 +9,12 @@
 	<parent>
 		<groupId>eu.interiot.intermw</groupId>
 		<artifactId>mw.bridge.orion.parent</artifactId>
-		<version>0.0.1-SNAPSHOT</version>
+		<version>1.0.1-SNAPSHOT</version>
 	</parent>
 
-	<properties>
-		<intermw.version>2.1.0-SNAPSHOT</intermw.version>
-	</properties>
+	<!-- <properties> 
+		 <intermw.version>2.3.0</intermw.version> 
+	 </properties> -->
 
 	<dependencies>
 		<!-- <dependency> -->

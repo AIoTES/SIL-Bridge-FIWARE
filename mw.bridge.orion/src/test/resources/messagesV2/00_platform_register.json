@@ -1,1 +1,34 @@
-{}
+{
+  "@graph" : [ {
+    "@graph" : [ {
+      "@id" : "InterIoTMsg:meta/8085e52e-5f4e-4b05-9cdf-88b4fa78d88b",
+      "@type" : [ "InterIoTMsg:Platform_register", "InterIoTMsg:meta" ],
+      "InterIoTMsg:ReceiverPlatformId" : {
+        "@id" : "InterIoT:example-platform1"
+      },
+      "InterIoTMsg:clientID" : "myclient",
+      "InterIoTMsg:conversationID" : "conv5d09c448-e9c2-4f43-bfdf-6b0917d39052",
+      "InterIoTMsg:dateTimeStamp" : "2018-06-04T14:21:52.914Z",
+      "InterIoTMsg:messageID" : "msg36259920-ce4d-42f7-bf82-b46acc3532d6"
+    } ],
+    "@id" : "InterIoTMsg:metadata"
+  }, {
+    "@graph" : [ {
+      "@id" : "_:b0",
+      "@type" : "InterIoT:GOIoTPex#AuthenticationData"
+    }, {
+      "@id" : "InterIoT:platforms/example-platform1",
+      "@type" : [ "InterIoT:FIWARE", "InterIoT:GOIoTP#SoftwarePlatform" ],
+      "InterIoT:GOIoTP#hasBaseEndpoint" : "http://localhost:1026",
+      "InterIoT:GOIoTP#hasLocation" : {
+        "@id" : "http://test.inter-iot.eu/TestLocation"
+      },
+      "InterIoT:GOIoTP#hasName" : "Fiware Platform"
+    } ],
+    "@id" : "InterIoTMsg:payload"
+  } ],
+  "@context" : {
+    "InterIoTMsg" : "http://inter-iot.eu/message/",
+    "InterIoT" : "http://inter-iot.eu/"
+  }
+}

@@ -13,6 +13,7 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 
+import eu.interiot.intermw.bridge.BridgeConfiguration;
 import eu.interiot.intermw.bridge.orion.OrionBridge;
 import eu.interiot.intermw.commons.DefaultConfiguration;
 import eu.interiot.intermw.commons.exceptions.MiddlewareException;
@@ -39,10 +40,11 @@ public class OrionBridgeTest {
 	@Test
 	public void tests() {
 
-		Configuration configuration;
+		BridgeConfiguration configuration;
 		OrionBridge orionBridge;
 		try {			
-			configuration = new DefaultConfiguration("*.bridge.properties");
+//			configuration = new DefaultConfiguration("*.bridge.properties");
+			configuration = new BridgeConfiguration("OrionBridge.properties", "http://inter-iot.eu/example-platform1", new DefaultConfiguration("intermw.properties"));
 			orionBridge = new OrionBridge(configuration, platform);
 			
 			// create Message objects from serialized messages

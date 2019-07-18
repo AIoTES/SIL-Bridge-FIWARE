@@ -384,8 +384,9 @@ public class FIWAREv2Translator extends SyntacticTranslator<String> {
         //Parse id
         NodeIterator nodeIterator = jenaModel.listObjectsOfProperty(entityResource, hasId);
         if (nodeIterator.hasNext()) {
-            String strFilteredId = OrionV2Utils.filterThingID(nodeIterator.next().toString());
-        	entity.put("id", strFilteredId);
+ //           String strFilteredId = OrionV2Utils.filterThingID(nodeIterator.next().toString());
+ //       	entity.put("id", strFilteredId);
+        	entity.put("id", nodeIterator.next().toString()); // Return full value, extract data in the bridge to get Service and ServicePath values.
         }
 
         //Parse type

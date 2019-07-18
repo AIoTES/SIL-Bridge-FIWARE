@@ -5,6 +5,8 @@ import java.util.HashSet;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import javax.net.ssl.SSLContext;
+
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.methods.HttpDelete;
@@ -25,6 +27,8 @@ import org.apache.jena.vocabulary.RDF;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.google.common.base.Strings;
+import com.google.gson.Gson;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
@@ -74,57 +78,81 @@ public class OrionV2Utils {
     public static final String EntityTypeSSNDevice = URIoldssn + "Device";
     
     public static final String propHasIdURI = FIWAREv2Translator.FIWAREbaseURI + "hasId";
-       	
-	public static String registerEntity(String baseUrl, String body) throws IOException {
+    private static String deviceIdPrefix;  //from properties,  default value "http://inter-iot.eu/dev/"
+        
+    // Authentication
+    static String token = null;
+    static SSLContext customSslContext = null;
+    
+    public static void setDeviceIdPrefix(String prefix){
+    	if (!prefix.endsWith("/")) prefix = prefix + "/"; // Just in case
+    	deviceIdPrefix = prefix;
+    }
+    
+    public static String getDeviceIdPrefix(){
+    	return deviceIdPrefix;
+    }
+    
+	public static String registerEntity(String baseUrl, String body, String service, String servicePath) throws IOException {
 		String completeUrl = baseUrl + FIWARE_ENTITY_REGISTER;
-		return postToFiware(completeUrl, body);
+		return postToFiware(completeUrl, body, service, servicePath);
 	}
 	
-	public static String unregisterEntity(String baseUrl, String entityId) throws IOException {
-		String completeUrl = baseUrl + FIWARE_ENTITY_UNREGISTER+"/"+entityId;
-		return deleteInFiware(completeUrl); 
+	
+	public static String unregisterEntity(String baseUrl, String entityId, String type, String service, String servicePath) throws IOException {
+		// Add entity type to avoid ambiguity
+		String completeUrl = baseUrl + FIWARE_ENTITY_UNREGISTER+"/"+entityId + "?type=" + type;
+		return deleteInFiware(completeUrl, service, servicePath); 
 	}
 	
-	public static String updateEntity(String baseUrl, String entityId, String body) throws IOException {
-		String completeUrl = baseUrl + FIWARE_ENTITY_UPDATE + "/" + entityId + "/attrs" ;
+	
+	public static String updateEntity(String baseUrl, String entityId, String type, String body, String service, String servicePath) throws IOException {
+		// Add entity type to avoid ambiguity
+		String completeUrl = baseUrl + FIWARE_ENTITY_UPDATE + "/" + entityId + "/attrs" + "?type=" + type;
 		String completeBody = removeId(body);
-		return putToFiware(completeUrl, completeBody); 
+		return putToFiware(completeUrl, completeBody, service, servicePath); 
 	}
-	
-	public static String publishEntityObservation(String baseUrl, String entityId ,String body) throws IOException {
-		String completeUrl = baseUrl + FIWARE_ENTITY_OBSERVATION+"/"+entityId;
-		return putToFiware(completeUrl,body);
+		
+	public static String publishEntityObservation(String baseUrl, String entityId, String type, String body, String service, String servicePath) throws IOException {
+		String completeUrl = baseUrl + FIWARE_ENTITY_OBSERVATION+"/"+entityId+"/attrs" + "?type=" + type;
+		return postToFiware(completeUrl,body, service, servicePath);
 	}
 	
 	public static String discoverEntities(String baseUrl) throws IOException {
 		String completeUrl = baseUrl + FIWARE_ENTITY_DISCOVERY;
-		return getFromFiware(completeUrl); 
+		return getFromFiware(completeUrl, "", ""); 
 	}
 	
 	//TODO Check ontology alignment with Pawel/Kasia
 	//TODO Build a shortcut to query a single entity by id
-	public static String queryEntityById(String baseUrl, String entityId) throws IOException {
+	
+	public static String queryEntityById(String baseUrl, String entityId, String type, String service, String servicePath) throws IOException {
 		String completeUrl = baseUrl + FIWARE_ENTITY_QUERY;
-		String body = buildJsonWithIds(entityId);
-		return postToFiware(completeUrl, body); 
+		String body = buildJsonWithIdAndType(entityId, type);
+		return postToFiware(completeUrl, body, service, servicePath);
 	}
     
-	public static String createSubscription(String baseUrl, String body) throws IOException {
+	public static String createSubscription(String baseUrl, String body, String service, String servicePath) throws IOException {
 		String completeUrl = baseUrl + FIWARE_ENTITY_SUBSCRIBE;
-		return buildJsonWithSubscriptionId(postToFiware(completeUrl, body)); 
+		return buildJsonWithSubscriptionId(postToFiware(completeUrl, body, service, servicePath)); 
 	}
 
-	public static String removeSubscription(String baseUrl, String subscriptionId) throws IOException {
+	public static String removeSubscription(String baseUrl, String subscriptionId, String service, String servicePath) throws IOException {
 		String completeUrl = baseUrl + FIWARE_ENTITY_UNSUBSCRIBE+"/"+subscriptionId;
-		return deleteInFiware(completeUrl); 
+		return deleteInFiware(completeUrl, service, servicePath); 
 	}
 	
-    private static String postToFiware(String url, String body) throws IOException{
-    		
-		httpClient = HttpClientBuilder.create().build();
+    private static String postToFiware(String url, String body, String service, String servicePath) throws IOException{   	
+    	
+		if(customSslContext == null)  httpClient = HttpClientBuilder.create().build();
+		else httpClient = HttpClientBuilder.create().setSSLContext(customSslContext).build();
         HttpPost httpPost = new HttpPost(url);        
         HttpEntity httpEntity = new StringEntity(body, ContentType.APPLICATION_JSON);
-        httpPost.setEntity(httpEntity);
+        httpPost.setEntity(httpEntity);   
+        
+        if (service != null && service !="") httpPost.setHeader("Fiware-Service", service);     
+        if (servicePath != null && servicePath !="") httpPost.setHeader("Fiware-ServicePath", servicePath);
+        if (token != null) httpPost.setHeader("x-auth-token", token);
         HttpResponse response = null;
         String responseBody = "";
 		try {
@@ -139,7 +167,6 @@ public class OrionV2Utils {
 				logger.info(responseBody);
 			}
 		} catch (IOException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}finally {
 			if(httpClient!=null) {
@@ -150,9 +177,13 @@ public class OrionV2Utils {
 		return responseBody;
 	}
     
-    private static String getFromFiware(String url) throws IOException{
-		httpClient = HttpClientBuilder.create().build();
+    private static String getFromFiware(String url, String service, String servicePath) throws IOException{
+    	if(customSslContext == null)  httpClient = HttpClientBuilder.create().build();
+		else httpClient = HttpClientBuilder.create().setSSLContext(customSslContext).build();
         HttpGet httpGet = new HttpGet(url);        
+        if (token != null) httpGet.setHeader("x-auth-token", token);
+        if (service != null && service !="") httpGet.setHeader("Fiware-Service", service);     
+        if (servicePath != null && servicePath !="") httpGet.setHeader("Fiware-ServicePath", servicePath);
         HttpResponse response = null;
         String responseBody = "";
 		try {
@@ -172,10 +203,14 @@ public class OrionV2Utils {
 		return responseBody;
 	}
     
-    private static String putToFiware(String url, String body) throws IOException{
-		httpClient = HttpClientBuilder.create().build();
+    private static String putToFiware(String url, String body, String service, String servicePath) throws IOException{
+    	if(customSslContext == null)  httpClient = HttpClientBuilder.create().build();
+		else httpClient = HttpClientBuilder.create().setSSLContext(customSslContext).build();
         HttpPut httpPut = new HttpPut(url); 
         HttpEntity httpEntity = new StringEntity(body, ContentType.APPLICATION_JSON);
+        if (token != null) httpPut.setHeader("x-auth-token", token);
+        if (service != null && service !="") httpPut.setHeader("Fiware-Service", service);     
+        if (servicePath != null && servicePath !="") httpPut.setHeader("Fiware-ServicePath", servicePath);
         httpPut.setEntity(httpEntity);
         HttpResponse response = null;
         String responseBody = "";
@@ -196,9 +231,13 @@ public class OrionV2Utils {
 		return responseBody;
 	}
     
-    private static String deleteInFiware(String url) throws IOException{
-    	httpClient = HttpClientBuilder.create().build();
+    private static String deleteInFiware(String url, String service, String servicePath) throws IOException{
+    	if(customSslContext == null)  httpClient = HttpClientBuilder.create().build();
+		else httpClient = HttpClientBuilder.create().setSSLContext(customSslContext).build();
     	HttpDelete httpDelete = new HttpDelete(url);
+    	if (token != null) httpDelete.setHeader("x-auth-token", token);
+    	 if (service != null && service !="") httpDelete.setHeader("Fiware-Service", service);     
+         if (servicePath != null && servicePath !="") httpDelete.setHeader("Fiware-ServicePath", servicePath);
     	HttpResponse response = null;
     	String responseBody = "";
     	try {
@@ -218,35 +257,115 @@ public class OrionV2Utils {
 		return responseBody;
     }
     
-    public static String filterThingID(String thingId) {
-    	String filteredString = thingId;
-		// Check algorithm is optimal+
-    	if (filteredString.contains("http://inter-iot.eu/dev/")) {
-			filteredString = thingId.replace("http://inter-iot.eu/dev/", "");
-		} 
-    	if (filteredString.contains("http://")) {
-			filteredString = filteredString.replace("://", "_");
-		}
-		if (filteredString.contains("/")) {
-			filteredString = filteredString.replace("/", "");
-		}
-		if (filteredString.contains("#")) {
-			filteredString = filteredString.replace("#", "+");
-		}
-		if (filteredString.contains(":")) {
-			filteredString = filteredString.replace(":", "");
-		}
-		return filteredString;
+    // Old implementation
+//    public static String filterThingID(String thingId) {
+//    	String filteredString = thingId;
+//    	if (filteredString.contains("http://inter-iot.eu/dev/")) { // TODO: get value from properties
+//			filteredString = thingId.replace("http://inter-iot.eu/dev/", "");
+//		} 
+//    	if (filteredString.contains("http://")) {
+//			filteredString = filteredString.replace("://", "_");
+//		}
+//		if (filteredString.contains("/")) {
+//			filteredString = filteredString.replace("/", "");
+//		}
+//		if (filteredString.contains("#")) {
+//			filteredString = filteredString.replace("#", "+");
+//		}
+//		if (filteredString.contains(":")) {
+//			filteredString = filteredString.replace(":", "");
+//		}
+//		return filteredString;
+//	}
+    
+    // New algorithm
+  public static String[] filterThingID(String thingId) {
+	  /*Output:
+	   * 0 - entity id
+	   * 1 - entity type
+	   * 2 - service (empty String for default value)
+	   * 3 - servicePath (empty String for default value)
+	   * */
+	// "http://inter-iot.eu/dev/{service}/{type}/{entityId}#{servicePath}"
+  	String filteredString = thingId;
+  	String servicePath = "";
+  	String service = "";
+  	String type;
+  	String id;
+  	String[] result;
+  	if (filteredString.contains(OrionV2Utils.deviceIdPrefix)) {
+			filteredString = thingId.replace(OrionV2Utils.deviceIdPrefix, "");
+			if(thingId.contains("#")){
+				// Not the default servicePath
+				String[] splitId = filteredString.split("#");
+				servicePath = "/" + splitId[1]; // Only one "#" character allowed in deviceId.
+				filteredString = splitId[0];
+			}
+			String[] splitId = filteredString.split("/");
+			if(splitId.length>2) service = splitId[splitId.length - 3];
+    		type = splitId[splitId.length - 2]; 
+    		id = splitId[splitId.length - 1]; 
+    		
+    		result = new String[4];
+    		result[0] = id;
+    		result[1] = type;
+    		result[2] = service;
+    		result[3] = servicePath;
+    		
+		} else result = new String[]{thingId};
+		
+		return result;
+  	
 	}
+    
+    public static String createThingId(String id, String type, String service, String servicePath){
+    	// "http://inter-iot.eu/dev/{service}/{type}/{entityId}#{servicePath}"
+    	String thingId = OrionV2Utils.deviceIdPrefix;
+    	if(!Strings.isNullOrEmpty(service)) thingId = thingId + service + "/";
+    	thingId = thingId + type + "/";
+    	thingId = thingId + id;
+    	// Add "#{servicePath}" only if it is not the default value
+    	if(!Strings.isNullOrEmpty(servicePath) && !servicePath.equals("/")){
+    		if(servicePath.startsWith("/")) servicePath = servicePath.substring(1);
+    		thingId = thingId + "#" + servicePath;
+    	} 
+    	return thingId;
+    }
+    
+    public static String setDeviceId(String entity, String service, String servicePath){
+    	JsonParser parser = new JsonParser();
+    	JsonElement element = parser.parse(entity);
+         
+        if(element instanceof JsonArray){
+        	JsonArray input = element.getAsJsonArray();
+        	JsonArray output = new JsonArray();
+        	Gson gson = new Gson();
+        	for(int i=0; i<input.size(); i++){
+        		 output.add(setDeviceId(input.get(i).getAsJsonObject(), service, servicePath));
+        	}
+        	return gson.toJson(output);
+        }else{
+        	return setDeviceId(element.getAsJsonObject(), service, servicePath).toString();
+        }
+    }
+    
+    public static JsonObject setDeviceId(JsonObject entity, String service, String servicePath){
+    	String devId = entity.get("id").getAsString();
+        String type = entity.get("type").getAsString();
+        entity.addProperty("id", createThingId(devId, type, service, servicePath));
+        return entity;
+    }
 	    
     public static String buildJsonWithIds(String... entityId){
     	JsonObject jsonObjectFinal = new JsonObject();
     	JsonArray jsonArray = new JsonArray();
     	for (String id : entityId) {
-    		String transformedID = filterThingID(id);
-        	
+    		String[] entityID = filterThingID(id);
+        	String transformedID = entityID[0];
+        	    		
         	JsonObject jsonObjectId = new JsonObject(); 
-        	jsonObjectId.addProperty("id", transformedID);       	
+        	jsonObjectId.addProperty("id", transformedID);  
+        	// TODO: add type
         	jsonArray.add(jsonObjectId);        	
 		}    	
     	jsonObjectFinal.add("entities", jsonArray);
@@ -254,6 +373,34 @@ public class OrionV2Utils {
     	return jsonObjectFinal.toString();
     }
     
+    public static String buildJsonWithTypes(String... entityType){
+    	JsonObject jsonObjectFinal = new JsonObject();
+    	JsonArray jsonArray = new JsonArray();
+    	for (String type : entityType) {
+    		
+        	JsonObject jsonObjectId = new JsonObject(); 
+        	jsonObjectId.addProperty("idPattern", ".*");
+        	jsonObjectId.addProperty("type", type);  
+        	// Add idPattern?
+        	jsonArray.add(jsonObjectId);        	
+		}    	
+    	jsonObjectFinal.add("entities", jsonArray);
+    	
+    	return jsonObjectFinal.toString();
+    }
+    
+    public static String buildJsonWithIdAndType(String entityId, String entityType){
+    	JsonObject jsonObjectFinal = new JsonObject();
+    	JsonArray jsonArray = new JsonArray();
+        JsonObject jsonObjectId = new JsonObject(); 
+        jsonObjectId.addProperty("id", entityId);  
+        jsonObjectId.addProperty("type", entityType);
+        jsonArray.add(jsonObjectId);        	    	
+    	jsonObjectFinal.add("entities", jsonArray);
+    	
+    	return jsonObjectFinal.toString();
+    }
+        
     public static String buildJsonWithUrl(String body, String url){
     	JsonParser parser = new JsonParser();
     	JsonElement jsonBody = parser.parse(body);
@@ -291,7 +438,6 @@ public class OrionV2Utils {
     }
     
     public static String getPlatformId(Platform platform){
-//		return platform.getId().getId();
 		return platform.getPlatformId();
 	}
     
@@ -329,14 +475,14 @@ public class OrionV2Utils {
         return names;
     }
     
-    public static Set<String> getPlatformIds(Message message){
-		Set<EntityID> entityIds = getEntityIDsFromPayloadAsEntityIDSet(message.getPayload(), EntityTypeDevice);
-		Set<String> deviceIds = new HashSet<>();
-		for (EntityID entityId : entityIds) {
-			deviceIds.addAll(getIdFromPayload(entityId, message.getPayload()));
-		}
-		return deviceIds;
-	}
+//    public static Set<String> getPlatformIds(Message message){
+//		Set<EntityID> entityIds = getEntityIDsFromPayloadAsEntityIDSet(message.getPayload(), EntityTypeDevice);
+//		Set<String> deviceIds = new HashSet<>();
+//		for (EntityID entityId : entityIds) {
+//			deviceIds.addAll(getIdFromPayload(entityId, message.getPayload()));
+//		}
+//		return deviceIds;
+//	}
     
     /**
      * Generate metadata for a test message device
@@ -380,4 +526,5 @@ public class OrionV2Utils {
 		// Attach the payload to the message
 		messageResponse.setPayload(responsePayload);
     }
+    
 }
