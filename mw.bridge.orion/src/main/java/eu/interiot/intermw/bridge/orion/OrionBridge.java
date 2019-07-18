@@ -62,7 +62,6 @@ import eu.interiot.message.managers.URI.URIManagerMessageMetadata.MessageTypesEn
 import eu.interiot.message.metadata.PlatformMessageMetadata;
 import eu.interiot.message.payload.types.IoTDevicePayload;
 import eu.interiot.translators.syntax.FIWARE.FIWAREv2Translator;
-import spark.Request;
 import spark.Spark;
 
 @eu.interiot.intermw.bridge.annotations.Bridge(platformType = "http://inter-iot.eu/FIWARE")
@@ -108,7 +107,7 @@ public class OrionBridge extends AbstractBridge {
 			if(entityTypes != null){
 				types = entityTypes.replaceAll(" ", "").split(",");
 			} else{
-				// Disable discovery if types == null or try to discover every entity?
+				// Disable device discovery if types == null
 				types = null;
 			}
 			
@@ -322,7 +321,6 @@ public class OrionBridge extends AbstractBridge {
 		        metadata.initializeMetadata();
 		        metadata.addMessageType(URIManagerMessageMetadata.MessageTypesEnum.DEVICE_REGISTRY_INITIALIZE);
 		        metadata.setSenderPlatformId(new EntityID(platform.getPlatformId()));
-//		        metadata.setConversationId(conversationId); 
 //		        MessagePayload devicePayload = new MessagePayload(translatedModel);
 		        
 		        deviceRegistryInitializeMessage.setMetadata(metadata);
@@ -380,11 +378,13 @@ public class OrionBridge extends AbstractBridge {
 	            	
 				    String response = OrionV2Utils.queryEntityById(BASE_PATH, transformedId, type, entityID[2], entityID[3]);
 				    
-	            	if (response.startsWith("[")) response=response.substring(1, response.length()-1); // JSON object, not JSON array
+//	            	if (response.startsWith("[")) response=response.substring(1, response.length()-1); // JSON object, not JSON array
 	            	logger.info(response);	
 	            	// Set proper deviceID value
 	            	responseBody = OrionV2Utils.setDeviceId(response, entityID[2], entityID[3]);
+	            	
 	            }
+	            
 			}
 	        // Create the model from the response JSON
 			Model translatedModel = translator.toJenaModel(responseBody);
@@ -653,10 +653,10 @@ public class OrionBridge extends AbstractBridge {
 		this.testResultFileName = testResultFileName;
 	}
 	
-	private String testServerGet(Request req){
-		logger.info("GET request received");
-		return "GET request received";
-	}
+//	private String testServerGet(Request req){
+//		logger.info("GET request received");
+//		return "GET request received";
+//	}
 		
 	// For self-signed certificates
     private void setCustomTrustStore(String trustStore, String trustStorePass) throws Exception{
@@ -782,22 +782,35 @@ public class OrionBridge extends AbstractBridge {
 			            metadata.initializeMetadata();
 			            metadata.addMessageType(URIManagerMessageMetadata.MessageTypesEnum.DEVICE_ADD_OR_UPDATE);
 			            metadata.setSenderPlatformId(new EntityID(platform.getPlatformId()));
-//			            metadata2.setConversationId(conversationId); 
+			            
 			            // Create a new message payload with the information about the device
 			            JsonObject deviceObject = devices.get(i).getAsJsonObject();
+			            String entityID = deviceObject.get("id").getAsString();
+			            String entityType = deviceObject.get("type").getAsString();
 			            deviceObject = OrionV2Utils.setDeviceId(deviceObject, responseService, path);
-			            Model deviceModel = translator.toJenaModel(deviceObject.toString());	            
-			    		MessagePayload devicePayload = new MessagePayload(deviceModel);
+			            // TODO: use syntactic and semantic translation
+//			            Model deviceModel = translator.toJenaModel(deviceObject.toString());	            
+//			    		MessagePayload devicePayload = new MessagePayload(deviceModel);
 			            
+			            // Create message payload in GOIoTP
+			            IoTDevicePayload devicePayload = new IoTDevicePayload();
+			            EntityID ioTDeviceID = new EntityID(deviceObject.get("id").getAsString());
+			            EntityID platformId = new EntityID(platform.getPlatformId());
+			            devicePayload.createIoTDevice(ioTDeviceID);
+			            String name = entityType + " " + entityID + ", service " + responseService + ", servicePath " + path;
+			            devicePayload.setHasName(ioTDeviceID, name);
+			            devicePayload.setIsHostedBy(ioTDeviceID, platformId);
+			            
+			    		// Create and send Device_Add_Or_Update message			            
 			            addDeviceMessage.setMetadata(metadata);
 			            addDeviceMessage.setPayload(devicePayload);
-			            
 			            publisher.publish(addDeviceMessage);
 			            logger.debug("Device_Add_Or_Update message has been published upstream.");
 					}
 					logger.debug(devices.size() + " new devices have been added to the registry");
 		         }
 		         catch(Exception e){
+		        	 e.printStackTrace();
 		        	 return "500-KO";
 		         }
 		         return "200-OK";

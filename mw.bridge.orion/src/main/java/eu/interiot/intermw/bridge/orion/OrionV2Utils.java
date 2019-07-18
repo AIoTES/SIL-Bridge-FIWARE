@@ -28,6 +28,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.google.common.base.Strings;
+import com.google.gson.Gson;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
@@ -77,7 +78,7 @@ public class OrionV2Utils {
     public static final String EntityTypeSSNDevice = URIoldssn + "Device";
     
     public static final String propHasIdURI = FIWAREv2Translator.FIWAREbaseURI + "hasId";
-    private static String deviceIdPrefix;  //Default value "http://inter-iot.eu/dev/"
+    private static String deviceIdPrefix;  //from properties,  default value "http://inter-iot.eu/dev/"
         
     // Authentication
     static String token = null;
@@ -127,9 +128,8 @@ public class OrionV2Utils {
 	
 	public static String queryEntityById(String baseUrl, String entityId, String type, String service, String servicePath) throws IOException {
 		String completeUrl = baseUrl + FIWARE_ENTITY_QUERY;
-//		String body = buildJsonWithIds(entityId);
 		String body = buildJsonWithIdAndType(entityId, type);
-		return postToFiware(completeUrl, body, service, servicePath); 
+		return postToFiware(completeUrl, body, service, servicePath);
 	}
     
 	public static String createSubscription(String baseUrl, String body, String service, String servicePath) throws IOException {
@@ -143,7 +143,6 @@ public class OrionV2Utils {
 	}
 	
     private static String postToFiware(String url, String body, String service, String servicePath) throws IOException{   	
-    	// Todo: set service and servicePath as input parameters
     	
 		if(customSslContext == null)  httpClient = HttpClientBuilder.create().build();
 		else httpClient = HttpClientBuilder.create().setSSLContext(customSslContext).build();
@@ -168,7 +167,6 @@ public class OrionV2Utils {
 				logger.info(responseBody);
 			}
 		} catch (IOException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}finally {
 			if(httpClient!=null) {
@@ -336,8 +334,19 @@ public class OrionV2Utils {
     
     public static String setDeviceId(String entity, String service, String servicePath){
     	JsonParser parser = new JsonParser();
-    	JsonObject deviceObject = parser.parse(entity).getAsJsonObject();
-    	return setDeviceId(deviceObject, service, servicePath).toString();
+    	JsonElement element = parser.parse(entity);
+         
+        if(element instanceof JsonArray){
+        	JsonArray input = element.getAsJsonArray();
+        	JsonArray output = new JsonArray();
+        	Gson gson = new Gson();
+        	for(int i=0; i<input.size(); i++){
+        		 output.add(setDeviceId(input.get(i).getAsJsonObject(), service, servicePath));
+        	}
+        	return gson.toJson(output);
+        }else{
+        	return setDeviceId(element.getAsJsonObject(), service, servicePath).toString();
+        }
     }
     
     public static JsonObject setDeviceId(JsonObject entity, String service, String servicePath){
@@ -429,7 +438,6 @@ public class OrionV2Utils {
     }
     
     public static String getPlatformId(Platform platform){
-//		return platform.getId().getId();
 		return platform.getPlatformId();
 	}
     
