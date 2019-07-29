@@ -18,9 +18,23 @@
     </properties>
 
     <modules>
-        <module>fiware-ngsiv2-java-client-1.3.0</module>
+        <!-- <module>fiware-ngsiv2-java-client-1.3.0</module>-->
         <module>mw.bridge.orion</module>
     </modules>
+
+<build>
+    <plugins>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-surefire-plugin</artifactId>
+        <version>3.0.0-M3</version>
+        <configuration>
+          <skipTests>true</skipTests>
+        </configuration>
+      </plugin>
+    </plugins>
+  </build>
+
 
     <repositories>
         <repository>
