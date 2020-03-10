@@ -67,7 +67,6 @@ import spark.Spark;
 @eu.interiot.intermw.bridge.annotations.Bridge(platformType = "http://inter-iot.eu/FIWARE")
 public class OrionBridge extends AbstractBridge {
 
-//	private final static String PROPERTIES_PREFIX = "orion-";
 	private String BASE_PATH;
 	private String callbackAddress;
 	private Map<String, List<String[]>> subscriptionIds = new HashMap<String,List<String[]>>();
@@ -86,6 +85,8 @@ public class OrionBridge extends AbstractBridge {
 	private String[] types;
 	private String[] services;
 	private List<String[]> discoverySubscriptions = new ArrayList<String[]>();
+	private String discoveryUrl;
+	private Thread discoveryThread;
 
 	public OrionBridge(BridgeConfiguration configuration, Platform platform) throws MiddlewareException {
 		super(configuration, platform);
@@ -94,7 +95,7 @@ public class OrionBridge extends AbstractBridge {
 			String url = platform.getBaseEndpoint().toString(); // Get base path from the Register Platform message
 			if (url.endsWith("/")) url = url.substring(0, url.length()-1); // Just in case
 			BASE_PATH = url;
-			callbackAddress = this.bridgeCallbackUrl.toString(); // Same base callback address for all bridges
+			callbackAddress = this.bridgeCallbackUrl.toString();
 		
 			// Raise the server
 //			get(callbackAddress, (req, res) -> testServerGet(req));
@@ -103,6 +104,7 @@ public class OrionBridge extends AbstractBridge {
 			// Discovery
 			String entityTypes = properties.getProperty("entityTypes");
 			String definedServices = properties.getProperty("services");
+			discoveryUrl = properties.getProperty("discoveryUrl");
 			
 			if(entityTypes != null){
 				types = entityTypes.replaceAll(" ", "").split(",");
@@ -246,7 +248,7 @@ public class OrionBridge extends AbstractBridge {
 	        	String transformedID = entityID[0];
 			    String type = entityID[1];
 			    
-				String responseBody = OrionV2Utils.unregisterEntity(BASE_PATH, transformedID, type, entityID[2], entityID[3]); // Type added to avoid ambiguity
+				String responseBody = OrionV2Utils.unregisterEntity(BASE_PATH, transformedID, type, entityID[2], entityID[3]); 
 				// Get the Model from the response
 				FIWAREv2Translator translator = new FIWAREv2Translator();
 				Model translatedModel = translator.toJenaModel(responseBody);			
@@ -308,7 +310,7 @@ public class OrionBridge extends AbstractBridge {
 	
 	@Override
 	public Message listDevices(Message message) {
-		// TODO: UPDATE DISCOVERY QUERY (and update registry with new devices)
+		// Device discovery
 		Message responseMessage = createResponseMessage(message);
 		logger.debug("ListDevices started...");
 		String conversationId = message.getMetadata().getConversationId().orElse(null);
@@ -321,19 +323,27 @@ public class OrionBridge extends AbstractBridge {
 		        metadata.initializeMetadata();
 		        metadata.addMessageType(URIManagerMessageMetadata.MessageTypesEnum.DEVICE_REGISTRY_INITIALIZE);
 		        metadata.setSenderPlatformId(new EntityID(platform.getPlatformId()));
-//		        MessagePayload devicePayload = new MessagePayload(translatedModel);
 		        
 		        deviceRegistryInitializeMessage.setMetadata(metadata);
-//		        deviceRegistryInitializeMessage.setPayload(devicePayload);
 		        deviceRegistryInitializeMessage.setPayload(new MessagePayload());
 		        publisher.publish(deviceRegistryInitializeMessage);
 		        logger.debug("Device_Registry_Initialize message has been published upstream.");
 				
 				// Start device discovery
-				deviceDiscovery(conversationId);
+		        if(discoveryUrl!=null){
+		        	// Discovery with specific enabler (needs the base URL of the custom discovery component)
+		        	discoveryThread = new Thread(new DeviceDiscovery()); // TODO: add sleep time as input parameter to the constructor
+		        	discoveryThread.start();
+		        	logger.debug("Using custom enabler for device discovery");
+		        }else{
+		        	// Discovery using subscriptions
+		        	logger.debug("Using subscriptions for device discovery");
+		        	deviceDiscoverySubscription(conversationId);
+		        }
+				
 				responseMessage.getMetadata().setStatus("OK");
 			} catch (Exception e) {
-				logger.error("Error in query: " + e.getMessage());
+				logger.error("Error in listDevices: " + e.getMessage());
 				e.printStackTrace();
 				responseMessage.getMetadata().setStatus("KO");
 				responseMessage.getMetadata().setMessageType(MessageTypesEnum.ERROR);
@@ -353,7 +363,6 @@ public class OrionBridge extends AbstractBridge {
 	        FIWAREv2Translator translator = new FIWAREv2Translator();
 	        if (reqIoTDevices.isEmpty()) {
 	        	// Query all devices
-	        	// TODO: change query to Orion (same as device discovery)
 	        	String response = OrionV2Utils.discoverEntities(BASE_PATH);
 //				logger.info(responseBody);
 	        	// Create a new message payload with the information about the device
@@ -629,35 +638,167 @@ public class OrionBridge extends AbstractBridge {
 		return responseMessage;
 	}
 
-	public boolean isTestMode() {
-		return testMode;
-	}
+    
+    private void deviceDiscoverySubscription(String conversationId) throws Exception{
+			// Discover all the registered devices
+            JsonParser parser = new JsonParser();
+            
+            // Create subscriptions by service and entity type
+            for (String service : services) {
+            	for (String type : types) {
+            		JsonObject subjectObject = parser.parse(OrionV2Utils.buildJsonWithTypes(type)).getAsJsonObject();
+            		JsonObject urlObject = new JsonObject();
+            		JsonObject notificationObject = new JsonObject();
+            		notificationObject.add("http", urlObject);
+            		JsonObject subscription = new JsonObject();
+            		subscription.add("subject", subjectObject);
+            		subscription.add("notification", notificationObject);
+            		// TODO: add "expires" attribute
+            		String requestBody = subscription.toString();
+            		
+            		// Change the message callback address of the body for the address where the bridge is listening after a subscription 
+            		requestBody = OrionV2Utils.buildJsonWithUrl(requestBody, callbackAddress.concat("/" + conversationId));
+            		
+            		// Create the subscription
+            		String responseBody = OrionV2Utils.createSubscription(BASE_PATH, requestBody, service, ""); // Any sevicePath
+				
+            		String subscriptionId = parser.parse(responseBody).getAsJsonObject().get("id").getAsString();
+            		// Keep track of the subscription ids
+            		if(subscriptionId != null){
+						discoverySubscriptions.add(new String[]{subscriptionId, service});
+            		} 
+            	}
+            }
+            
+            // Add devices and keep device registry up to date
+			Spark.post(conversationId, (req, response) -> { // Unique endpoint
+		         try{
+		        	JsonObject bodyObject = parser.parse(req.body()).getAsJsonObject();
+		        	JsonArray devices = bodyObject.get("data").getAsJsonArray();
+		        	String responseService = req.headers("Fiware-Service");
+		        	String responseServicePath = req.headers("Fiware-ServicePath");
+		        	String[] servicePath = responseServicePath.split(","); // List of servicePath values
+		 			for(int i = 0; i < devices.size(); i++){
+		 				String path;
+		 				if(servicePath.length > 1)	path = servicePath[i];
+		 				else path = servicePath[0];
+			            
+			            // Create a new message with the information about the device
+			            JsonObject deviceObject = devices.get(i).getAsJsonObject();
+			            String entityID = deviceObject.get("id").getAsString();
+			            String entityType = deviceObject.get("type").getAsString();
+			            deviceObject = OrionV2Utils.setDeviceId(deviceObject, responseService, path);
+			            String name = entityType + " " + entityID + ", service " + responseService + ", servicePath " + path;
+			            
+			            Message addDeviceMessage = createDeviceAddMessage(deviceObject, name);
+			            publisher.publish(addDeviceMessage);
+			            logger.debug("Device_Add_Or_Update message has been published upstream.");
+					}
+					logger.debug(devices.size() + " new devices have been added to the registry");
+		         }
+		         catch(Exception e){
+		        	 logger.error("Error in device discovery: " + e.getMessage());
+		        	 e.printStackTrace();
+		        	 return "500-KO";
+		         }
+		         return "200-OK";
+	        });
+    }
+    
+    
+    private Message createDeviceAddMessage(JsonObject deviceObject, String name){
+    	// Metadata
+		Message addDeviceMessage = new Message();
+		PlatformMessageMetadata metadata = new MessageMetadata().asPlatformMessageMetadata();
+        metadata.initializeMetadata();
+        metadata.addMessageType(URIManagerMessageMetadata.MessageTypesEnum.DEVICE_ADD_OR_UPDATE);
+        metadata.setSenderPlatformId(new EntityID(platform.getPlatformId()));
+        
+        // Create message payload in GOIoTP
+        IoTDevicePayload devicePayload = new IoTDevicePayload();
+        EntityID ioTDeviceID = new EntityID(deviceObject.get("id").getAsString());
+        EntityID platformId = new EntityID(platform.getPlatformId());
+        devicePayload.createIoTDevice(ioTDeviceID);
+        devicePayload.setHasName(ioTDeviceID, name);
+        devicePayload.setIsHostedBy(ioTDeviceID, platformId);
+        
+		// Create message			            
+        addDeviceMessage.setMetadata(metadata);
+        addDeviceMessage.setPayload(devicePayload);
+        return addDeviceMessage;
+    }
+    
+    
+    private void stopDeviceDiscovery(){
+    	// Stop device discovery thread
+    	if(discoveryThread!=null) discoveryThread.interrupt();
+    	
+    	// Remove subscriptions
+    	for (String[] subscription : discoverySubscriptions){
+    		String subscriptionId = subscription[0];
+    		String service = subscription[1];
+			try{
+				OrionV2Utils.removeSubscription(BASE_PATH, subscriptionId, service, "");
+			}catch (Exception e){
+				logger.error("Error unsubscribing: " + e.getMessage());
+				e.printStackTrace();
+			}
+		}
+    }
+    
+    
+    class DeviceDiscovery implements Runnable{
 
-	public void setTestMode(boolean testMode) {
-		this.testMode = testMode;
-	}
+    	int sleepTime = 300000; // should be configurable
+    	long lastCheck = 0;
+    	
+		@Override
+		public void run() {
+			JsonParser parser = new JsonParser();
+			
+			while (!Thread.interrupted()) {
+                // Request devices from discovery enabler
+				try {
+					for (String service : services) {
+						for (String type : types) {
+	            		
+							String response = OrionV2Utils.callDiscoveryEnabler(discoveryUrl, type, service, lastCheck, 0, 0);
+							
+							// Create and publish a Device_Add message for each discovered device
+							JsonArray devices = parser.parse(response).getAsJsonArray();
+							for(int i = 0; i < devices.size(); i++){
+					            
+					            // Create a new message with the information about the device
+					            JsonObject deviceObject = devices.get(i).getAsJsonObject();
+					            String entityID = deviceObject.get("id").getAsString();
+					            String entityType = deviceObject.get("type").getAsString();
+					            String servicePath = deviceObject.get("servicePath").getAsString();
+					            deviceObject = OrionV2Utils.setDeviceId(deviceObject, service, servicePath);
+					            String name = entityType + " " + entityID + ", service " + service + ", servicePath " + servicePath;
+					            
+					            Message addDeviceMessage = createDeviceAddMessage(deviceObject, name);
+					            publisher.publish(addDeviceMessage);
+					            logger.debug("Device_Add_Or_Update message has been published upstream.");
+							}
+							logger.debug(devices.size() + " new devices have been added to the registry");
+						}
+					}
+					lastCheck = System.currentTimeMillis() / 1000L;  // Unix epoch
+				} catch (Exception e) {
+					logger.error("Error in device discovery: " + e.getMessage());
+					e.printStackTrace();
+				}
+				
+				try {
+	                Thread.sleep(sleepTime);
+	            } catch (InterruptedException e) {
+	                return;
+	            }
+            }
+		}
+    	
+    }
 
-	public String getTestResultFilePath() {
-		return testResultFilePath;
-	}
-
-	public void setTestResultFilePath(String testResultFilePath) {
-		this.testResultFilePath = testResultFilePath;
-	}
-
-	public String getTestResultFileName() {
-		return testResultFileName;
-	}
-
-	public void setTestResultFileName(String testResultFileName) {
-		this.testResultFileName = testResultFileName;
-	}
-	
-//	private String testServerGet(Request req){
-//		logger.info("GET request received");
-//		return "GET request received";
-//	}
-		
 	// For self-signed certificates
     private void setCustomTrustStore(String trustStore, String trustStorePass) throws Exception{
     	// TO AVOID PROBLEMS WITH SSL SELF-SIGNED CERTIFICATES
@@ -728,108 +869,38 @@ public class OrionBridge extends AbstractBridge {
 			OrionV2Utils.customSslContext = sslContext;
 			
     }
+    
+    
+    //////////////// OLD TEST METHODS
+    
+	public boolean isTestMode() {
+		return testMode;
+	}
+
+	public void setTestMode(boolean testMode) {
+		this.testMode = testMode;
+	}
+
+	public String getTestResultFilePath() {
+		return testResultFilePath;
+	}
+
+	public void setTestResultFilePath(String testResultFilePath) {
+		this.testResultFilePath = testResultFilePath;
+	}
+
+	public String getTestResultFileName() {
+		return testResultFileName;
+	}
+
+	public void setTestResultFileName(String testResultFileName) {
+		this.testResultFileName = testResultFileName;
+	}
 	
-    
-    private void deviceDiscovery(String conversationId) throws Exception{
-			// Discover all the registered devices
-//			String responseBody = OrionV2Utils.discoverEntities(BASE_PATH);
-//			logger.info(responseBody);
-			FIWAREv2Translator translator = new FIWAREv2Translator();
-            JsonParser parser = new JsonParser();
-            
-            // Create subscriptions by service and entity type
-            for (String service : services) {
-            	for (String type : types) {
-            		JsonObject subjectObject = parser.parse(OrionV2Utils.buildJsonWithTypes(type)).getAsJsonObject();
-            		JsonObject urlObject = new JsonObject();
-            		JsonObject notificationObject = new JsonObject();
-            		notificationObject.add("http", urlObject);
-            		JsonObject subscription = new JsonObject();
-            		subscription.add("subject", subjectObject);
-            		subscription.add("notification", notificationObject);
-            		// TODO: add "expires" attribute
-            		String requestBody = subscription.toString();
-            		
-            		// Change the message callback address of the body for the address where the bridge is listening after a subscription 
-            		requestBody = OrionV2Utils.buildJsonWithUrl(requestBody, callbackAddress.concat("/" + conversationId));
-            		
-            		// Create the subscription
-            		String responseBody = OrionV2Utils.createSubscription(BASE_PATH, requestBody, service, ""); // Any sevicePath
-				
-            		String subscriptionId = parser.parse(responseBody).getAsJsonObject().get("id").getAsString();
-            		// Keep track of the subscription ids
-            		if(subscriptionId != null){
-						discoverySubscriptions.add(new String[]{subscriptionId, service});
-            		} 
-            	}
-            }
-            
-            // Add devices and keep device registry up to date
-			Spark.post(conversationId, (req, response) -> { // Unique endpoint
-		         try{
-		        	JsonObject bodyObject = parser.parse(req.body()).getAsJsonObject();
-		        	JsonArray devices = bodyObject.get("data").getAsJsonArray();
-		        	String responseService = req.headers("Fiware-Service");
-		        	String responseServicePath = req.headers("Fiware-ServicePath");
-		        	String[] servicePath = responseServicePath.split(","); // List of servicePath values
-		 			for(int i = 0; i < devices.size(); i++){
-		 				String path;
-		 				if(servicePath.length > 1)	path = servicePath[i];
-		 				else path = servicePath[0];
-		 				// Metadata
-						Message addDeviceMessage = new Message();
-						PlatformMessageMetadata metadata = new MessageMetadata().asPlatformMessageMetadata();
-			            metadata.initializeMetadata();
-			            metadata.addMessageType(URIManagerMessageMetadata.MessageTypesEnum.DEVICE_ADD_OR_UPDATE);
-			            metadata.setSenderPlatformId(new EntityID(platform.getPlatformId()));
-			            
-			            // Create a new message payload with the information about the device
-			            JsonObject deviceObject = devices.get(i).getAsJsonObject();
-			            String entityID = deviceObject.get("id").getAsString();
-			            String entityType = deviceObject.get("type").getAsString();
-			            deviceObject = OrionV2Utils.setDeviceId(deviceObject, responseService, path);
-			            // TODO: use syntactic and semantic translation
-//			            Model deviceModel = translator.toJenaModel(deviceObject.toString());	            
-//			    		MessagePayload devicePayload = new MessagePayload(deviceModel);
-			            
-			            // Create message payload in GOIoTP
-			            IoTDevicePayload devicePayload = new IoTDevicePayload();
-			            EntityID ioTDeviceID = new EntityID(deviceObject.get("id").getAsString());
-			            EntityID platformId = new EntityID(platform.getPlatformId());
-			            devicePayload.createIoTDevice(ioTDeviceID);
-			            String name = entityType + " " + entityID + ", service " + responseService + ", servicePath " + path;
-			            devicePayload.setHasName(ioTDeviceID, name);
-			            devicePayload.setIsHostedBy(ioTDeviceID, platformId);
-			            
-			    		// Create and send Device_Add_Or_Update message			            
-			            addDeviceMessage.setMetadata(metadata);
-			            addDeviceMessage.setPayload(devicePayload);
-			            publisher.publish(addDeviceMessage);
-			            logger.debug("Device_Add_Or_Update message has been published upstream.");
-					}
-					logger.debug(devices.size() + " new devices have been added to the registry");
-		         }
-		         catch(Exception e){
-		        	 e.printStackTrace();
-		        	 return "500-KO";
-		         }
-		         return "200-OK";
-	        });
-    }
-    
-    private void stopDeviceDiscovery(){
-    	// Remove subscriptions
-    	for (String[] subscription : discoverySubscriptions){
-    		String subscriptionId = subscription[0];
-    		String service = subscription[1];
-			try{
-				OrionV2Utils.removeSubscription(BASE_PATH, subscriptionId, service, "");
-			}catch (Exception e){
-				logger.error("Error unsubscribing: " + e.getMessage());
-				e.printStackTrace();
-			}
-		}
-    }
+//	private String testServerGet(Request req){
+//		logger.info("GET request received");
+//		return "GET request received";
+//	}
     
 //	private String publishObservationToIntermw(Request req){
 //		 Message callbackMessage = new Message();

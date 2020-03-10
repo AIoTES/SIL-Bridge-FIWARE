@@ -12,7 +12,7 @@
 
     <groupId>eu.interiot.intermw</groupId>
     <artifactId>mw.bridge.orion.parent</artifactId>
-    <version>1.0.1-SNAPSHOT</version>
+    <version>1.0.2-SNAPSHOT</version>
     <name>INTER-IoT Bridge for Orion (Parent)</name>
     <packaging>pom</packaging>
 

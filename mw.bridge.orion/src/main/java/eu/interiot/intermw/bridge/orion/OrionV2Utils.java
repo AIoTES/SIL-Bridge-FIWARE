@@ -1,6 +1,7 @@
 package eu.interiot.intermw.bridge.orion;
 
 import java.io.IOException;
+import java.net.URISyntaxException;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -13,6 +14,7 @@ import org.apache.http.client.methods.HttpDelete;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.client.methods.HttpPut;
+import org.apache.http.client.utils.URIBuilder;
 import org.apache.http.entity.ContentType;
 import org.apache.http.entity.StringEntity;
 import org.apache.http.impl.client.CloseableHttpClient;
@@ -116,6 +118,42 @@ public class OrionV2Utils {
 	public static String publishEntityObservation(String baseUrl, String entityId, String type, String body, String service, String servicePath) throws IOException {
 		String completeUrl = baseUrl + FIWARE_ENTITY_OBSERVATION+"/"+entityId+"/attrs" + "?type=" + type;
 		return postToFiware(completeUrl,body, service, servicePath);
+	}
+	
+	public static String callDiscoveryEnabler(String baseUrl, String type, String service, long lastCheck, int offset, int limit) throws IOException{
+		// Call custom device discovery enabler
+		String responseBody = "";
+		try {
+			URIBuilder builder = new URIBuilder(baseUrl);
+			builder.setPath("/devices");
+			builder.addParameter("type", type);
+			if(lastCheck!=0) builder.addParameter("lastCheck", String.valueOf(lastCheck));
+			// For pagination (not used for the moment). TODO: for pagination, include the "content-range" header of the response in the returned string.
+			if(offset!=0) builder.addParameter("offset", String.valueOf(offset));
+			if(limit!=0) builder.addParameter("limit", String.valueOf(limit));
+			
+			if(customSslContext == null)  httpClient = HttpClientBuilder.create().build();
+			else httpClient = HttpClientBuilder.create().setSSLContext(customSslContext).build();
+	        HttpGet httpGet = new HttpGet(builder.build());        
+//	        if (token != null) httpGet.setHeader("x-auth-token", token);
+	        if (service != null && service !="") httpGet.setHeader("Fiware-Service", service);     
+//	        if (servicePath != null && servicePath !="") httpGet.setHeader("Fiware-ServicePath", servicePath);
+	        HttpResponse response = null;
+	        
+			response = httpClient.execute(httpGet);
+			if(response != null && response.getEntity() != null){
+				responseBody = EntityUtils.toString(response.getEntity());
+				logger.info(responseBody);
+			}
+			logger.info("Received response from the discovery Enabler: {}", response.getStatusLine()); 
+		} catch (Exception e) {
+			e.printStackTrace();
+		}finally {
+			if(httpClient!=null) {
+				httpClient.close();
+			}
+		}		
+		return responseBody;
 	}
 	
 	public static String discoverEntities(String baseUrl) throws IOException {
