@@ -123,6 +123,7 @@ public class OrionV2Utils {
 	public static String callDiscoveryEnabler(String baseUrl, String type, String service, long lastCheck, int offset, int limit) throws IOException{
 		// Call custom device discovery enabler
 		String responseBody = "";
+		logger.info("Sending request to the discovery Enabler...");
 		try {
 			URIBuilder builder = new URIBuilder(baseUrl);
 			builder.setPath("/devices");
@@ -135,6 +136,7 @@ public class OrionV2Utils {
 			if(customSslContext == null)  httpClient = HttpClientBuilder.create().build();
 			else httpClient = HttpClientBuilder.create().setSSLContext(customSslContext).build();
 	        HttpGet httpGet = new HttpGet(builder.build());        
+	        // X-API-Key header
 //	        if (token != null) httpGet.setHeader("x-auth-token", token);
 	        if (service != null && service !="") httpGet.setHeader("Fiware-Service", service);     
 //	        if (servicePath != null && servicePath !="") httpGet.setHeader("Fiware-ServicePath", servicePath);
@@ -143,7 +145,7 @@ public class OrionV2Utils {
 			response = httpClient.execute(httpGet);
 			if(response != null && response.getEntity() != null){
 				responseBody = EntityUtils.toString(response.getEntity());
-				logger.info(responseBody);
+//				logger.info(responseBody);
 			}
 			logger.info("Received response from the discovery Enabler: {}", response.getStatusLine()); 
 		} catch (Exception e) {

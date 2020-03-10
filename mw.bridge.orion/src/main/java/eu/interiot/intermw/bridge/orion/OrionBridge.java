@@ -87,6 +87,7 @@ public class OrionBridge extends AbstractBridge {
 	private List<String[]> discoverySubscriptions = new ArrayList<String[]>();
 	private String discoveryUrl;
 	private Thread discoveryThread;
+	private int discoveryInterval;
 
 	public OrionBridge(BridgeConfiguration configuration, Platform platform) throws MiddlewareException {
 		super(configuration, platform);
@@ -105,6 +106,7 @@ public class OrionBridge extends AbstractBridge {
 			String entityTypes = properties.getProperty("entityTypes");
 			String definedServices = properties.getProperty("services");
 			discoveryUrl = properties.getProperty("discoveryUrl");
+			discoveryInterval = Integer.valueOf(properties.getProperty("discoveryInterval", "300000")); // Default: 5 min
 			
 			if(entityTypes != null){
 				types = entityTypes.replaceAll(" ", "").split(",");
@@ -332,7 +334,7 @@ public class OrionBridge extends AbstractBridge {
 				// Start device discovery
 		        if(discoveryUrl!=null){
 		        	// Discovery with specific enabler (needs the base URL of the custom discovery component)
-		        	discoveryThread = new Thread(new DeviceDiscovery()); // TODO: add sleep time as input parameter to the constructor
+		        	discoveryThread = new Thread(new DeviceDiscovery(discoveryInterval));
 		        	discoveryThread.start();
 		        	logger.debug("Using custom enabler for device discovery");
 		        }else{
@@ -749,8 +751,12 @@ public class OrionBridge extends AbstractBridge {
     
     class DeviceDiscovery implements Runnable{
 
-    	int sleepTime = 300000; // should be configurable
+    	int sleepTime;
     	long lastCheck = 0;
+    	
+    	public DeviceDiscovery(int interval){
+    		sleepTime=interval;
+    	}
     	
 		@Override
 		public void run() {
@@ -783,7 +789,7 @@ public class OrionBridge extends AbstractBridge {
 							logger.debug(devices.size() + " new devices have been added to the registry");
 						}
 					}
-					lastCheck = System.currentTimeMillis() / 1000L;  // Unix epoch
+					lastCheck = System.currentTimeMillis();  // Unix time in milliseconds
 				} catch (Exception e) {
 					logger.error("Error in device discovery: " + e.getMessage());
 					e.printStackTrace();
