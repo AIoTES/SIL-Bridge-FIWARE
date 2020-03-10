@@ -84,6 +84,7 @@ public class OrionV2Utils {
         
     // Authentication
     static String token = null;
+    static String discoveryToken = null;
     static SSLContext customSslContext = null;
     
     public static void setDeviceIdPrefix(String prefix){
@@ -136,8 +137,9 @@ public class OrionV2Utils {
 			if(customSslContext == null)  httpClient = HttpClientBuilder.create().build();
 			else httpClient = HttpClientBuilder.create().setSSLContext(customSslContext).build();
 	        HttpGet httpGet = new HttpGet(builder.build());        
-	        // X-API-Key header
+	        // X-API-KEY header
 //	        if (token != null) httpGet.setHeader("x-auth-token", token);
+	        if (discoveryToken != null) httpGet.setHeader("X-API-KEY", discoveryToken);
 	        if (service != null && service !="") httpGet.setHeader("Fiware-Service", service);     
 //	        if (servicePath != null && servicePath !="") httpGet.setHeader("Fiware-ServicePath", servicePath);
 	        HttpResponse response = null;

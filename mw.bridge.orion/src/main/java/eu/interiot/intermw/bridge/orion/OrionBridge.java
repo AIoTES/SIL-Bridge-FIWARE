@@ -129,7 +129,8 @@ public class OrionBridge extends AbstractBridge {
 			if(BASE_PATH.startsWith("https") && trustStore != null) setCustomTrustStore(trustStore, trustStorePass);
 			// Authentication token
 //			OrionV2Utils.token = platform.getEncryptedPassword(); 
-			OrionV2Utils.token = properties.getProperty("token");; // TODO: improve this
+			OrionV2Utils.token = properties.getProperty("token"); // TODO: improve this
+			OrionV2Utils.discoveryToken = properties.getProperty("discoveryToken");
 			OrionV2Utils.setDeviceIdPrefix(properties.getProperty("deviceIdPrefix","http://inter-iot.eu/dev/"));
 			
 		} catch (Exception e) {
