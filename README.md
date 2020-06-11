@@ -30,8 +30,10 @@ The bridge can use two different methods for the device discovery, depending on 
 
 
 ### Automatic bridge installation
+You need a machine with Docker to build the bridge and create the installation image.
 
-Install bridges parent POM.
+
+Install bridges parent POM (you only need to do this the first time). Clone the "parent-bridge" repository and use `mvn install`
 
 
 Build bridge and create installation docker image (from mw.bridge.orion directory):
