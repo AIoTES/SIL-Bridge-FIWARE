@@ -1,4 +1,5 @@
-# intermw_bridge_fiware
+# Fiware Bridge
+Bridge for the Fiware platform.
 
 
 **General bridge features**
@@ -11,3 +12,15 @@ __TODO__
 * actuate has not been tested (needs semantic alignment)
 * query --> Currently implemented by ID and as a general query to all entities in Fiware. Not tested yet with semantic alignments.
 * platformCreateDevices, platformUpdateDevices: test with semantic alignments.
+
+
+## Build
+Build with Maven using
+
+`mvn clean package -DskipTests`
+
+
+## Configuration and use
+Configuration in OrionBridgeBridge.properties file.
+
+Fiware bridge guide: https://docs.google.com/document/d/1SyBYlofBnNEeWZaLIXphYsxuhKN-taToy4O1pStub5I/edit
