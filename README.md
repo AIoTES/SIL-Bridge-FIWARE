@@ -1,4 +1,5 @@
-# intermw_bridge_fiware
+# Fiware Bridge
+Bridge for the Fiware platform.
 
 
 **General bridge features**
@@ -13,7 +14,19 @@ __TODO__
 * platformCreateDevices, platformUpdateDevices: test with semantic alignments.
 
 
-**Bridge configuration and device discovery**
+## Build
+Build with Maven using
+
+mvn clean package -DskipTests
+
+
+## Configuration and use
+Configuration in OrionBridgeBridge.properties file.
+
+Fiware bridge guide: https://docs.google.com/document/d/1SyBYlofBnNEeWZaLIXphYsxuhKN-taToy4O1pStub5I/edit
+
+
+### Bridge configuration and device discovery
 The automatic registration of the devices when the Fiware platform is registered depends on a correct configuration of the bridge. The following configuration parameters are needed for the device discovery:
 * entityTypes: a list (separated by commas) of the entity types that represent devices in the Fiware platform.
 * services:  a list (separated by commas) of the Fiware services where the devices of interest are located. If this property is not set and the device discovery is enabled, only the default Fiware service will be used in the discovery.
