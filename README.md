@@ -20,6 +20,18 @@ Build with Maven using
 mvn clean package -DskipTests
 
 
+## Limitations on the standard bridge
+The standard FIWARE bridge uses the Orion REST API to perform the discovery and CRUD operations on virtual devices. However, the subscription mechanism provided by FIWARE has limitations that can affect to the initial discovery process, especially on platforms with a large number of virtual devices. More especifically:
+* the subscription response is limited to 1000 results. On platfors with iver 1000 virtual devices, the intial discovery will just discover the initial 1000 devices.
+* the subscription is not returning information about the 'FIWARE_SERVICE' each device belongs to. This affects to platforms where virtual devices are spread over different services.
+
+If any of these two restrictions apply, it is advisable to install a specific enabler for FIWARE that exposes Orion methods needed by the bridge and manages the initial discovery witouth losing information.
+
+The enabler is available at https://git.activageproject.eu/AIOTES_integration/AIOTES-FIWARE-Discovery-Enabler 
+
+This enable exposes a REST API that has to be made available to the bridge (there should be connectivity between both of them). The url to this API is setup when declaring the platform in the SIL.
+
+
 ## Configuration and use
 Configuration in OrionBridgeBridge.properties file.
 
