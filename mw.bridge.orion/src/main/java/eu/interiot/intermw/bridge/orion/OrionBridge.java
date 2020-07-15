@@ -119,7 +119,9 @@ public class OrionBridge extends AbstractBridge {
 			// Discovery
 			String entityTypes = properties.getProperty("entityTypes");
 			String definedServices = properties.getProperty("services");
-			discoveryUrl = properties.getProperty("discoveryUrl");
+			boolean discoveryEnabler= Boolean.valueOf(properties.getProperty("discoveryEnabler","false"));
+			if(discoveryEnabler) discoveryUrl = url;
+			else discoveryUrl = null;
 			discoveryInterval = Integer.valueOf(properties.getProperty("discoveryInterval", "300000")); // Default: 5 min
 			
 			if(entityTypes != null){

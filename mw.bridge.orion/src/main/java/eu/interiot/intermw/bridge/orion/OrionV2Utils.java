@@ -226,7 +226,8 @@ public class OrionV2Utils {
         
         if (service != null && service !="") httpPost.setHeader("Fiware-Service", service);     
         if (servicePath != null && servicePath !="") httpPost.setHeader("Fiware-ServicePath", servicePath);
-        if (token != null) httpPost.setHeader("x-auth-token", token);
+        if (token != null) httpPost.setHeader("x-auth-token", token); // Use Fiware PEP proxy
+        if (discoveryToken != null) httpPost.setHeader("X-API-KEY", discoveryToken); // Use discovery enabler
         HttpResponse response = null;
         String responseBody = "";
 		try {
@@ -255,7 +256,8 @@ public class OrionV2Utils {
     	if(customSslContext == null)  httpClient = HttpClientBuilder.create().build();
 		else httpClient = HttpClientBuilder.create().setSSLContext(customSslContext).build();
         HttpGet httpGet = new HttpGet(url);        
-        if (token != null) httpGet.setHeader("x-auth-token", token);
+        if (token != null) httpGet.setHeader("x-auth-token", token); // Use Fiware PEP proxy
+        if (discoveryToken != null) httpGet.setHeader("X-API-KEY", discoveryToken); // Use discovery enabler
         if (service != null && service !="") httpGet.setHeader("Fiware-Service", service);     
         if (servicePath != null && servicePath !="") httpGet.setHeader("Fiware-ServicePath", servicePath);
         HttpResponse response = null;
@@ -282,7 +284,8 @@ public class OrionV2Utils {
 		else httpClient = HttpClientBuilder.create().setSSLContext(customSslContext).build();
         HttpPut httpPut = new HttpPut(url); 
         HttpEntity httpEntity = new StringEntity(body, ContentType.APPLICATION_JSON);
-        if (token != null) httpPut.setHeader("x-auth-token", token);
+        if (token != null) httpPut.setHeader("x-auth-token", token); // Use Fiware PEP proxy
+        if (discoveryToken != null) httpPut.setHeader("X-API-KEY", discoveryToken); // Use discovery enabler
         if (service != null && service !="") httpPut.setHeader("Fiware-Service", service);     
         if (servicePath != null && servicePath !="") httpPut.setHeader("Fiware-ServicePath", servicePath);
         httpPut.setEntity(httpEntity);
@@ -309,7 +312,8 @@ public class OrionV2Utils {
     	if(customSslContext == null)  httpClient = HttpClientBuilder.create().build();
 		else httpClient = HttpClientBuilder.create().setSSLContext(customSslContext).build();
     	HttpDelete httpDelete = new HttpDelete(url);
-    	if (token != null) httpDelete.setHeader("x-auth-token", token);
+    	if (token != null) httpDelete.setHeader("x-auth-token", token); // Use Fiware PEP proxy
+    	if (discoveryToken != null) httpDelete.setHeader("X-API-KEY", discoveryToken); // Use discovery enabler
     	 if (service != null && service !="") httpDelete.setHeader("Fiware-Service", service);     
          if (servicePath != null && servicePath !="") httpDelete.setHeader("Fiware-ServicePath", servicePath);
     	HttpResponse response = null;

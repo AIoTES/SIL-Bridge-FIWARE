@@ -42,15 +42,15 @@ Fiware bridge guide: https://docs.google.com/document/d/1SyBYlofBnNEeWZaLIXphYsx
 The automatic registration of the devices when the Fiware platform is registered depends on a correct configuration of the bridge. The following configuration parameters are needed for the device discovery:
 * entityTypes: a list (separated by commas) of the entity types that represent devices in the Fiware platform.
 * services:  a list (separated by commas) of the Fiware services where the devices of interest are located. If this property is not set and the device discovery is enabled, only the default Fiware service will be used in the discovery.
-* discoveryUrl: base URL of the discovery enabler.
+* discoveryEnabler: true or false (default). If true, use discovery enabler (the base URL of the discovery enabler is provided as the "baseEndpoint" value when the Fiware platform is registered).
 * discoveryInterval: time interval for querying the discovery enabler about new devices (in ms).
 * discoveryToken: token for the discovery enabler.
 
 
 The bridge can use two different methods for the device discovery, depending on how it is configured:
 * If entityTypes is not set, the device discovery is disabled.
-* If entityTypes is set and discoveryUrl is not set, the device discovery method based on subscriptions is used. This method is not advisable if there is a considerable amount of devices in the platform (>500 approximately).
-* If both entityTypes and discoveryUrl are set, the device discovery method based on a discovery enabled is used. This method relies on the use of a custom discovery enabler on the Fiware platform. The properties discoveryInterval and discoveryToken must be also set to the proper values in this case. 
+* If entityTypes is set and discoveryEnabler is not set (or false), the device discovery method based on subscriptions is used. This method is not advisable if there is a considerable amount of devices in the platform (>500 approximately).
+* If both entityTypes is set and discoveryEnabler is true, the device discovery method based on a discovery enabled is used. This method relies on the use of a custom discovery enabler on the Fiware platform. The properties discoveryInterval and discoveryToken must be also set to the proper values in this case. The discovery enabler will act as a proxy for Orion and its URL must be used as base endpoint for Fiware when the platform is registered.
 
 
 
