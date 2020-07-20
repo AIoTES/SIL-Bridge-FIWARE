@@ -53,6 +53,10 @@ import java.io.IOException;
 import java.util.*;
 import java.util.stream.Collectors;
 
+/**
+ * For more information, contact:
+ * - @author <a href="mailto:pawel.szmeja@ibspan.waw.pl">Paweł Szmeja</a>
+ */
 public class FIWAREv2Translator extends SyntacticTranslator<String> {
 
     private String idURI;

@@ -37,7 +37,10 @@ import org.apache.jena.rdf.model.*;
 
 import java.util.Set;
 
-
+/**
+ * For more information, contact:
+ * - @author <a href="mailto:pawel.szmeja@ibspan.waw.pl">Paweł Szmeja</a>
+ */
 public class SimpleIdTransformer extends JenaTransformer {
 
 

@@ -34,6 +34,10 @@ package eu.interiot.translators.syntax.FIWARE;
 
 import eu.interiot.translators.syntax.transformer.FormatXTransformer;
 
+/**
+ * For more information, contact:
+ * - @author <a href="mailto:pawel.szmeja@ibspan.waw.pl">Paweł Szmeja</a>
+ */
 
 /**
  * Transforms FIWARE JSON between NGSIv1 and NGSIv2

@@ -38,6 +38,11 @@ import org.apache.jena.rdf.model.*;
 import java.util.Set;
 
 /**
+ * For more information, contact:
+ * - @author <a href="mailto:pawel.szmeja@ibspan.waw.pl">Paweł Szmeja</a>
+ */
+
+/**
  * Converts (both way) values of reference type (ones that refer to another entity) to RDF Resource references
  * <p>
  * e.g. a FIWARE JSON attribute X {type: "Ref", value: "Device1"} will be converted to RDF X [ hasValue <http://base.uri#Device1>]

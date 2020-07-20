@@ -32,6 +32,10 @@
  */
 package eu.interiot.translators.syntax.FIWARE;
 
+/**
+ * For more information, contact:
+ * - @author <a href="mailto:pawel.szmeja@ibspan.waw.pl">Paweł Szmeja</a>
+ */
 public class GeoJSONTransformer {
     //TODO: Implement and document
 }

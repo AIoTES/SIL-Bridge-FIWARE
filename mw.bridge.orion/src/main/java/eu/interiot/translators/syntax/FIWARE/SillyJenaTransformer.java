@@ -36,6 +36,11 @@ import eu.interiot.translators.syntax.transformer.JenaTransformer;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.ModelFactory;
 
+/**
+ * For more information, contact:
+ * - @author <a href="mailto:pawel.szmeja@ibspan.waw.pl">Paweł Szmeja</a>
+ */
+
 //TODO: Remove this file
 
 /**
