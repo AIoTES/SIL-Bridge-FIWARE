@@ -188,14 +188,12 @@ public class OrionBridge extends AbstractBridge {
 			BASE_PATH = url;
 		}
 		// TODO: set new user and password (if needed)
-		// DO ANYTHING ELSE?
 		responseMessage.getMetadata().setStatus("OK");
 		return responseMessage;
 	}
 		
 	@Override
 	public Message platformCreateDevices(Message message) {
-		// TODO: test with semantic translation
 		Message responseMessage = createResponseMessage(message);
 		try {
 			logger.info("Creating devices...");
@@ -219,7 +217,6 @@ public class OrionBridge extends AbstractBridge {
 				}
 			}else{
 				// No semantic translation
-				// TODO: FIND A BETTER WAY TO DO THIS
 				for (IoTDevice iotDevice : req.getDevices()) {
 		            logger.debug("Sending create-device (start-to-manage) request to the platform for device {}...", iotDevice.getDeviceId());
 		            
@@ -322,7 +319,6 @@ public class OrionBridge extends AbstractBridge {
 	
 	@Override
 	public Message listDevices(Message message) {
-		// TODO: UPDATE DISCOVERY QUERY (and update registry with new devices)
 		Message responseMessage = createResponseMessage(message);
 		logger.debug("ListDevices started...");
 		String conversationId = message.getMetadata().getConversationId().orElse(null);
@@ -369,7 +365,6 @@ public class OrionBridge extends AbstractBridge {
 	        	// Query all devices
 	        	// TODO: change query to Orion (same as device discovery)
 	        	String response = OrionV2Utils.discoverEntities(BASE_PATH);
-//				logger.info(responseBody);
 	        	// Create a new message payload with the information about the device
 	        	// Set proper ids
 	        	JsonParser parser = new JsonParser();
@@ -459,8 +454,6 @@ public class OrionBridge extends AbstractBridge {
 	@Override
 	public Message observe(Message message) {
 		Message responseMessage = createResponseMessage(message);
-//		Set<String> deviceIds = OrionV2Utils.getEntityIds(message);
-//		for(String deviceId : deviceIds){
 			try {
 				FIWAREv2Translator translator = new FIWAREv2Translator();
 				String body = translator.toFormatX(message.getPayload().getJenaModel());
@@ -493,7 +486,6 @@ public class OrionBridge extends AbstractBridge {
 				responseMessage.getMetadata().setMessageType(MessageTypesEnum.ERROR);
 				responseMessage.getMetadata().asErrorMessageMetadata().setExceptionStackTrace(e);
 			}
-//		}			
 		return responseMessage; 
 	}
 	
@@ -570,7 +562,6 @@ public class OrionBridge extends AbstractBridge {
 			         PlatformMessageMetadata metadata = new MessageMetadata().asPlatformMessageMetadata();
 			         metadata.initializeMetadata();
 			         metadata.addMessageType(URIManagerMessageMetadata.MessageTypesEnum.OBSERVATION);
-//			         metadata.addMessageType(URIManagerMessageMetadata.MessageTypesEnum.RESPONSE);
 			         metadata.setSenderPlatformId(new EntityID(platform.getPlatformId()));
 			         metadata.setConversationId(conversationId);
 			         callbackMessage.setMetadata(metadata);
@@ -746,8 +737,6 @@ public class OrionBridge extends AbstractBridge {
     
     private void deviceDiscovery(String conversationId) throws Exception{
 			// Discover all the registered devices
-//			String responseBody = OrionV2Utils.discoverEntities(BASE_PATH);
-//			logger.info(responseBody);
 			FIWAREv2Translator translator = new FIWAREv2Translator();
             JsonParser parser = new JsonParser();
             

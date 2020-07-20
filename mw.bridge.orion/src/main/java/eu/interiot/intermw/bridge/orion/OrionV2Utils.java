@@ -155,8 +155,6 @@ public class OrionV2Utils {
 		return getFromFiware(completeUrl, "", ""); 
 	}
 	
-	//TODO Check ontology alignment with Pawel/Kasia
-	//TODO Build a shortcut to query a single entity by id
 	
 	public static String queryEntityById(String baseUrl, String entityId, String type, String service, String servicePath) throws IOException {
 		String completeUrl = baseUrl + FIWARE_ENTITY_QUERY;
@@ -279,7 +277,6 @@ public class OrionV2Utils {
 				logger.info(responseBody);
 			}
 		} catch (IOException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}finally {
 			if(httpClient!=null) {
