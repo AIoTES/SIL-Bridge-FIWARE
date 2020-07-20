@@ -11,7 +11,6 @@ Bridge for the Fiware platform.
 __TODO__
 * actuate has not been tested (needs semantic alignment)
 * query --> Currently implemented by ID and as a general query to all entities in Fiware. Not tested yet with semantic alignments.
-* platformCreateDevices, platformUpdateDevices: test with semantic alignments.
 
 
 ## Build

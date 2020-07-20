@@ -33,7 +33,6 @@
 package eu.interiot.intermw.bridge.orion;
 
 import java.io.IOException;
-import java.net.URISyntaxException;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -179,7 +178,6 @@ public class OrionV2Utils {
 			response = httpClient.execute(httpGet);
 			if(response != null && response.getEntity() != null){
 				responseBody = EntityUtils.toString(response.getEntity());
-//				logger.info(responseBody);
 			}
 			logger.info("Received response from the discovery Enabler: {}", response.getStatusLine()); 
 		} catch (Exception e) {
@@ -197,8 +195,6 @@ public class OrionV2Utils {
 		return getFromFiware(completeUrl, "", ""); 
 	}
 	
-	//TODO Check ontology alignment with Pawel/Kasia
-	//TODO Build a shortcut to query a single entity by id
 	
 	public static String queryEntityById(String baseUrl, String entityId, String type, String service, String servicePath) throws IOException {
 		String completeUrl = baseUrl + FIWARE_ENTITY_QUERY;
@@ -325,7 +321,6 @@ public class OrionV2Utils {
 				logger.info(responseBody);
 			}
 		} catch (IOException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}finally {
 			if(httpClient!=null) {
