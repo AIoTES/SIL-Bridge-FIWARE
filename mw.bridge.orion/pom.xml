@@ -51,21 +51,18 @@
 	 </properties> -->
 
 	<dependencies>
-		<!-- <dependency> -->
-		<!-- <groupId>eu.interiot.intermw</groupId> -->
-		<!-- <artifactId>fiware-ngsiv2-client</artifactId> -->
-		<!-- <version>${project.version}</version> -->
-		<!-- </dependency> -->
 		<dependency>
 			<groupId>com.google.code.gson</groupId>
 			<artifactId>gson</artifactId>
 			<version>2.8.2</version>
+			<scope>provided</scope>
 		</dependency>
 
 		<dependency>
 			<groupId>eu.interiot.intermw</groupId>
 			<artifactId>mw.comm.broker.api</artifactId>
 			<version>${intermw.version}</version>
+			<scope>provided</scope>
 		</dependency>
 		<dependency>
 			<groupId>eu.interiot.intermw</groupId>
@@ -76,17 +73,19 @@
 			<groupId>com.spotify</groupId>
 			<artifactId>docker-client</artifactId>
 			<version>3.5.12</version>
-			<scope>test</scope>
+			<scope>provided</scope>
 		</dependency>
 		<dependency>
 			<groupId>com.sparkjava</groupId>
 			<artifactId>spark-core</artifactId>
 			<version>2.7.1</version>
+			<scope>provided</scope>
 		</dependency>
 		<dependency>
 			<groupId>org.slf4j</groupId>
 			<artifactId>slf4j-simple</artifactId>
 			<version>1.7.21</version>
+			<scope>provided</scope>
 		</dependency>
 
 		<dependency>
@@ -105,7 +104,7 @@
 			<groupId>eu.interiot.intermw</groupId>
 			<artifactId>mw.commons.impl</artifactId>
 			<version>${intermw.version}</version>
-			<scope>test</scope>
+			<scope>provided</scope>
 		</dependency>
 	</dependencies>
 </project>

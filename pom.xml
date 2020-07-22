@@ -117,7 +117,7 @@
                                 <configuration>
                                     <outputDirectory>${session.executionRootDirectory}</outputDirectory>
                                     <thirdPartyFilename>NOTICE</thirdPartyFilename>
-                                    <excludedGroups>org.reflections</excludedGroups>
+                                    <excludedScopes>provided</excludedScopes>
 									<excludeTransitiveDependencies>true</excludeTransitiveDependencies>
                                     <fileTemplate>misc/NOTICE-template.ftl</fileTemplate>
                                     <missingFile>misc/third-party.properties</missingFile>
